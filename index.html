@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friminutt - Games</title>
+<link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1a33'/%3E%3Cpath d='M8 50 26 20l9 14 6-8 15 24z' fill='%23e8f3ff'/%3E%3Cpath d='M26 20l5 8-5-2-4 4z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Rubik:ital,wght@0,400;0,500;0,700;0,900;1,800;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/docs.css">
+</head>
+<body>
+
+<!-- ============ GAME HUB ============ -->
+<div id="hub" class="screen">
+  <canvas id="hubSnow"></canvas>
+  <header class="hub-top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" class="brand-logo"><rect width="64" height="64" rx="14" fill="#13294d"/><path d="M8 50 26 20l9 14 6-8 15 24z" fill="#e8f3ff"/><path d="M26 20l5 8-5-2-4 4z" fill="#fff"/></svg>
+      <span>FRIMINUTT</span>
+    </div>
+    <div class="hub-top-right">
+      <span class="chip"><kbd>Å</kbd> panic button</span>
+      <button class="chip chip-btn" id="hubPanic" title="Switch to Docs">Å</button>
+    </div>
+  </header>
+
+  <main class="hub-main">
+    <section class="hero" id="heroCard">
+      <div class="hero-art" id="heroArt"></div>
+      <div class="hero-info">
+        <div class="hero-tag">NEW · 3D</div>
+        <h1>PEAK RUSH</h1>
+        <p>Freestyle skiing on four mountains. Spins, corks, grabs, rails, slalom gates and the northern lights.</p>
+        <div class="hero-stats" id="heroStats"></div>
+        <button class="btn-play" id="playSki"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>PLAY</button>
+      </div>
+    </section>
+
+    <h2 class="hub-h2">All games</h2>
+    <section class="game-grid" id="gameGrid"></section>
+  </main>
+  <footer class="hub-foot">Press <kbd>Å</kbd> any time to switch to a doc. Press it again to come back.</footer>
+</div>
+
+<!-- ============ SKI GAME ============ -->
+<div id="game" class="screen" hidden>
+  <canvas id="gl"></canvas>
+  <div id="flash"></div>
+
+  <div id="hud" hidden>
+    <div class="hud-tl">
+      <div id="hudMap">TERRAIN PARK</div>
+      <div class="prog"><div id="hudProg"></div></div>
+    </div>
+    <div class="hud-tr">
+      <div class="hud-label">SCORE</div>
+      <div id="hudScore">0</div>
+      <div id="hudCombo">
+        <div class="combo-row"><span id="hudComboPts">0</span><span class="x">×</span><span id="hudMult">1</span></div>
+        <div class="combo-bar"><div id="hudComboBar"></div></div>
+      </div>
+    </div>
+    <div class="hud-tc">
+      <div id="hudTimer" hidden>0:00.00</div>
+      <div id="hudGates" hidden></div>
+    </div>
+    <div id="trickFeed"></div>
+    <div class="hud-bl">
+      <div class="speedo"><div id="hudSpeed">0</div><div class="unit">KM/H</div></div>
+    </div>
+    <div id="balance" hidden>
+      <div class="bal-track"><div class="bal-zone"></div><div id="balNeedle"></div></div>
+      <div class="bal-label">BALANCE · A / D</div>
+    </div>
+    <div id="hint"></div>
+  </div>
+
+  <div id="mapSelect" class="overlay">
+    <div class="ms-head">
+      <button class="back-btn" id="msBack"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+      <h2>CHOOSE YOUR MOUNTAIN</h2>
+    </div>
+    <div class="map-grid" id="mapGrid"></div>
+    <div class="ms-bottom">
+      <div class="outfit">
+        <span>JACKET</span>
+        <div id="outfitPick"></div>
+      </div>
+      <button class="ghost-btn" id="msControls">CONTROLS</button>
+    </div>
+  </div>
+
+  <div id="controls" class="overlay" hidden>
+    <div class="panel">
+      <h2>CONTROLS</h2>
+      <div class="ctrl-grid">
+        <div><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd></div><div>Turn · in the air: <b>spin</b> · on rails: <b>balance</b></div>
+        <div><kbd>W</kbd> / <kbd>↑</kbd></div><div>Tuck for speed · in the air: <b>front flip</b></div>
+        <div><kbd>S</kbd> / <kbd>↓</kbd></div><div>Brake · in the air: <b>back flip</b></div>
+        <div>Spin + flip</div><div><b>Cork</b> (off-axis spin)</div>
+        <div><kbd>Space</kbd></div><div>Hold to crouch, release to <b>jump</b> (bigger pop at a kicker lip)</div>
+        <div><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>I</kbd><kbd>U</kbd><kbd>O</kbd></div><div>Grabs: Mute, Safety, Japan, Tail, Truck Driver, Critical</div>
+        <div><kbd>R</kbd></div><div>Restart run</div>
+        <div><kbd>M</kbd></div><div>Sound on / off</div>
+        <div><kbd>Esc</kbd></div><div>Pause</div>
+        <div><kbd>Å</kbd></div><div>Panic button: turns into a doc. Press again to come back</div>
+      </div>
+      <p class="tip">Land with your skis pointing forward or backward (switch) and your head up. Chain tricks before the combo bar runs out to stack the multiplier.</p>
+      <button class="btn-play small" id="ctrlClose">GOT IT</button>
+    </div>
+  </div>
+
+  <div id="pauseMenu" class="overlay" hidden>
+    <div class="panel narrow">
+      <h2>PAUSED</h2>
+      <button class="menu-btn" data-act="resume">RESUME</button>
+      <button class="menu-btn" data-act="restart">RESTART RUN</button>
+      <button class="menu-btn" data-act="maps">CHANGE MOUNTAIN</button>
+      <button class="menu-btn" data-act="controls">CONTROLS</button>
+      <button class="menu-btn" data-act="hub">QUIT TO GAMES</button>
+    </div>
+  </div>
+
+  <div id="results" class="overlay" hidden>
+    <div class="panel">
+      <div class="res-kicker" id="resKicker">RUN COMPLETE</div>
+      <h2 id="resTitle">TERRAIN PARK</h2>
+      <div class="res-big" id="resBig">0</div>
+      <div class="res-sub" id="resSub">POINTS</div>
+      <div class="res-grid" id="resGrid"></div>
+      <div class="res-btns">
+        <button class="btn-play small" id="resAgain">RIDE AGAIN</button>
+        <button class="ghost-btn" id="resMaps">MOUNTAINS</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="overlay" hidden><div class="spinner"></div><div>BUILDING MOUNTAIN…</div></div>
+</div>
+
+<!-- ============ DOCS DISGUISE (built by js/docs.js) ============ -->
+<div id="docs" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');</script>
+<script src="js/docs.js"></script>
+<script src="js/ski/audio.js"></script>
+<script src="js/ski/maps.js"></script>
+<script src="js/ski/skier.js"></script>
+<script src="js/ski/fx.js"></script>
+<script src="js/ski/props.js"></script>
+<script src="js/ski/world.js"></script>
+<script src="js/ski/game.js"></script>
+<script src="js/hub.js"></script>
+</body>
+</html>
