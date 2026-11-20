@@ -73,3 +73,12 @@ a.menu-btn { text-decoration: none; display: block; }
   .k-big { font-size: 32px; } .k-huge { font-size: 42px; } .k-bar { width: 140px; }
   .k-menu { background: rgba(5, 13, 29, .7); }
 }
+
+/* ===== per-game HUD bits ===== */
+.ice-pucks { display: flex; gap: 8px; margin-top: 6px; }
+.ice-pucks i { width: 30px; height: 13px; border-radius: 50%; background: #15171c; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 3px 8px rgba(0, 0, 0, .4); transition: opacity .3s, transform .3s; }
+.ice-pucks i.off { opacity: .25; transform: scale(.8); }
+.ice-pucks i.bad { background: #ff4d6d; }
+.ice-clock { width: 180px; margin-top: 6px; }
+.ice-charge { position: absolute; left: 0; top: 0; width: 0; height: 0; --c: 0; }
+.ice-charge::before { content: ''; position: absolute; left: -27px; top: -27px; width: 54px; height: 54px; border-radius: 50%; background: conic-gradient(var(--hot) calc(var(--c) * 1turn), rgba(255, 255, 255, .18) 0); -webkit-mask: radial-gradient(circle, transparent 21px, #000 22px); mask: radial-gradient(circle, transparent 21px, #000 22px); }
