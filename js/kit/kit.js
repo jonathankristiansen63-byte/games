@@ -475,6 +475,49 @@ window.KIT = (function () {
     Array.from(el.children).forEach((s, i) => s.classList.toggle('off', i >= n));
   };
 
+  // ---------- friends in the world (multiplayer) ----------
+  // a floating name tag: coloured letter + name, always readable
+  K.nameTag = (name, color, scale) => {
+    const tex = K.canvasTex(512, 128, (c, w, h) => {
+      c.clearRect(0, 0, w, h);
+      c.font = '700 54px Rubik, Arial, sans-serif';
+      const tw = Math.min(360, c.measureText(name).width), pw = tw + 150, x0 = (w - pw) / 2;
+      c.fillStyle = 'rgba(5,13,29,.72)'; c.beginPath(); if (c.roundRect) c.roundRect(x0, 14, pw, 100, 50); else c.rect(x0, 14, pw, 100); c.fill();
+      c.fillStyle = color || '#1a73e8'; c.beginPath(); c.arc(x0 + 56, 64, 38, 0, 7); c.fill();
+      c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '700 44px Roboto, Arial, sans-serif'; c.fillText((Array.from(name)[0] || '?').toUpperCase(), x0 + 56, 66);
+      c.textAlign = 'left'; c.font = '700 54px Rubik, Arial, sans-serif'; c.fillText(name, x0 + 110, 66, 360);
+    });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    const k = scale || 1; sp.scale.set(2.2 * k, 0.55 * k, 1); sp.renderOrder = 20;
+    return sp;
+  };
+  // friends' avatars: make(peer) builds an Object3D, apply(obj, state, dt) moves it; smooth() eases toward network updates
+  K.Ghosts = class {
+    constructor(scene, make, apply, tagY) { this.scene = scene; this.make = make; this.apply = apply; this.tagY = tagY == null ? 2.1 : tagY; this.map = new Map(); }
+    update(peers, dt) {
+      for (const [c, p] of peers) {
+        if (!p.s) continue;
+        let g = this.map.get(c);
+        if (!g) { const obj = this.make(p); const tag = K.nameTag(p.name, p.color); tag.position.y = this.tagY; obj.add(tag); this.scene.add(obj); g = { obj, fresh: true }; this.map.set(c, g); }
+        this.apply(g.obj, p.s, dt, g.fresh, p);
+        g.fresh = false;
+      }
+      for (const [c, g] of this.map) if (!peers.has(c) || !peers.get(c).s) { this.scene.remove(g.obj); this.map.delete(c); }
+    }
+    clear() { for (const [, g] of this.map) this.scene.remove(g.obj); this.map.clear(); }
+  };
+  const _sq = new THREE.Quaternion();
+  K.smoothTo = (obj, p, q, dt, snap, k) => {
+    const f = snap ? 1 : 1 - Math.exp(-(k || 14) * dt);
+    if (p) { if (snap || obj.position.distanceToSquared(_v3.set(p[0], p[1], p[2])) > 400) obj.position.set(p[0], p[1], p[2]); else obj.position.lerp(_v3.set(p[0], p[1], p[2]), f); }
+    if (q) obj.quaternion.slerp(_sq.set(q[0], q[1], q[2], q[3]), f);
+  };
+  const _v3 = new THREE.Vector3();
+  // where I stand in my party (sorted by friend code, so every screen agrees): spread players out at the start
+  K.partySlot = () => { if (!window.Net || !Net.inParty()) return { i: 0, n: 1, off: 0 }; const c = Net.players().map((p) => p.code).sort(), i = c.indexOf(Net.code); return { i, n: c.length, off: i - (c.length - 1) / 2 }; };
+  K.r3 = (v) => [Math.round(v.x * 100) / 100, Math.round(v.y * 100) / 100, Math.round(v.z * 100) / 100];
+  K.rq = (q) => [Math.round(q.x * 1000) / 1000, Math.round(q.y * 1000) / 1000, Math.round(q.z * 1000) / 1000, Math.round(q.w * 1000) / 1000];
+
   // ---------- app shell: menu, pause, controls, results, HUD, fixed-step loop, input ----------
   const ICON_BACK = '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>';
   const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
@@ -498,7 +541,7 @@ window.KIT = (function () {
       : `<button class="${app.opts[o.id] === c.id ? 'on' : ''}" data-v="${c.id}">${c.name}</button>`).join('')}</div></div>`).join('');
 
     ui.innerHTML = `
-      <div class="k-hud" id="kHud" hidden><div class="k-game" id="kGame"></div><div class="k-feed" id="kFeed"></div><div class="k-hint" id="kHint"></div></div>
+      <div class="k-hud" id="kHud" hidden><div class="k-game" id="kGame"></div><div class="k-live" id="kLive" hidden></div><div class="k-feed" id="kFeed"></div><div class="k-hint" id="kHint"></div></div>
       <div class="k-cross" id="kCross" hidden><i></i></div>
       <div class="k-flash" id="kFlash"></div>
       <div class="k-ov k-menu" id="kMenu">
@@ -508,7 +551,8 @@ window.KIT = (function () {
           <p class="k-blurb">${cfg.blurb || ''}</p>
           ${optHTML}
           <div class="k-modes" id="kModes"></div>
-          <div class="k-menu-foot"><button class="ghost-btn" data-k="controls">CONTROLS</button>${window.Scores && Scores.BOARDS[cfg.id] ? '<button class="ghost-btn" data-k="board">LEADERBOARD</button>' : ''}<span class="k-keys"><kbd>M</kbd> sound · <kbd>Å</kbd> panic</span></div>
+          <div class="k-party" id="kParty"></div>
+          <div class="k-menu-foot">${window.Net ? '<button class="ghost-btn k-friends" data-k="party">PLAY WITH FRIENDS</button>' : ''}<button class="ghost-btn" data-k="controls">CONTROLS</button>${window.Scores && Scores.BOARDS[cfg.id] ? '<button class="ghost-btn" data-k="board">LEADERBOARD</button>' : ''}<span class="k-keys"><kbd>M</kbd> sound · <kbd>Å</kbd> panic</span></div>
         </div>
       </div>
       <div class="k-ov k-dim" id="kControls" hidden><div class="panel">
@@ -533,6 +577,7 @@ window.KIT = (function () {
         <div class="res-sub" id="kResSub"></div>
         <div class="k-res-extra" id="kResExtra"></div>
         <div class="res-grid" id="kResGrid"></div>
+        <div class="lb-wrap" id="kResParty"></div>
         <div class="lb-wrap" id="kResBoard"></div>
         <div class="res-btns"><button class="btn-play small" data-k="again">${ICON_PLAY}PLAY AGAIN</button><button class="ghost-btn" data-k="menu">MENU</button></div>
       </div></div>
@@ -569,10 +614,14 @@ window.KIT = (function () {
         K.Audio.resume();
       }, 40);
     };
-    app.restart = () => { if (!app.mode) return; app.show(null); $('kFeed').innerHTML = ''; app.keys = {}; game.start(app.mode, app.opts); app.state = 'play'; acc = 0; K.Audio.resume(); };
+    app.restart = () => {
+      if (!app.mode) return;
+      if (guest()) { Net.toast('<span>The host starts the next round.</span>'); return; }
+      if (inParty()) { app.startParty(app.mode); return; } app.show(null); $('kFeed').innerHTML = ''; app.keys = {}; game.start(app.mode, app.opts); app.state = 'play'; acc = 0; K.Audio.resume(); };
     app.pause = () => { if (app.state !== 'play') return; app.state = 'paused'; app.keys = {}; K.Audio.pause(); app.show('pause'); if (game.paused) game.paused(true); };
     app.resume = () => { if (app.state !== 'paused') return; app.show(null); app.state = 'play'; app.keys = {}; last = performance.now(); acc = 0; K.Audio.resume(); if (game.paused) game.paused(false); };
     app.toMenu = () => {
+      if (inParty() && Net.isHost() && app.state !== 'menu') Net.send({ t: 'menu' });
       app.state = 'menu'; app.keys = {};
       $('kHud').hidden = true; app.cross(false);
       if (game.leave) game.leave();
@@ -588,6 +637,7 @@ window.KIT = (function () {
       $('kResExtra').innerHTML = r.extra || '';
       $('kResGrid').innerHTML = (r.cells || []).map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
       const pb = K.pendingBoard; K.pendingBoard = null;
+      partyResult(pb);
       if (pb && pb.game === cfg.id && window.Scores) Scores.post($('kResBoard'), pb.game, pb.mode, pb.value); else $('kResBoard').innerHTML = '';
       app.show('results');
     };
@@ -623,7 +673,7 @@ window.KIT = (function () {
     // ----- clicks -----
     ui.addEventListener('click', (e) => {
       const mb = e.target.closest('[data-mode]');
-      if (mb) { app.start(mb.dataset.mode); return; }
+      if (mb) { app.startParty(mb.dataset.mode); return; }
       const ob = e.target.closest('[data-opt] [data-v]');
       if (ob) {
         const o = ob.closest('[data-opt]').dataset.opt;
@@ -643,6 +693,7 @@ window.KIT = (function () {
       if (k === 'menu') app.toMenu();
       if (k === 'again') app.restart();
       if (k === 'board' && window.Scores) Scores.open(cfg.id);
+      if (k === 'party' && window.Net) Net.openFriends(cfg.id);
       if (k === 'profile' && window.Profile) Profile.ask();
     });
     const drawProfile = () => { const el = $('kProfile'); if (el && window.Profile) el.innerHTML = Profile.avatar() + '<span>' + Profile.esc(Profile.name || 'Your name') + '</span>'; };
@@ -653,7 +704,7 @@ window.KIT = (function () {
     const docsUp = () => !!(window.DocsDisguise && DocsDisguise.visible);
     const PREVENT = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
     // typing a name (or any dialog open) must not drive the game
-    const typing = (e) => !!((e.target && e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]')) || document.getElementById('pfModal') || document.getElementById('lbModal'));
+    const typing = (e) => !!((e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) || document.getElementById('pfModal') || document.getElementById('lbModal') || document.getElementById('frModal'));
     window.addEventListener('keydown', (e) => {
       if (docsUp() || typing(e)) return;
       const c = e.code;
@@ -718,14 +769,103 @@ window.KIT = (function () {
         while (acc >= DT && n < 12) { game.step(DT); acc -= DT; n++; if (app.state !== 'play') break; }
         if (n >= 12) acc = 0;
         if (app.state === 'play' || app.state === 'results') game.frame(rdt);
+        netTick(rdt);
         if (hintT > 0) { hintT -= rdt; if (hintT <= 0) $('kHint').textContent = ''; }
         if (!cross.hidden) cross.style.transform = `translate(${app.mouse.x}px, ${app.mouse.y}px)`;
       } else if (app.state === 'menu' || app.state === 'results') {
         if (game.idle) game.idle(rdt);
+        if (app.state === 'results') netTick(rdt);
       }
       if (app.state !== 'paused' || app.dirty) { (game.render ? game.render() : cfg.stage.render()); app.dirty = false; }
     }
     cfg.stage.onResize = () => { app.dirty = true; };
+
+    // ----- multiplayer: parties from js/net.js -----
+    // The host picks the mode for everyone and shares a seed so worlds match. While playing, everyone streams
+    // a small state (game.netState) and live score (game.netScore); games draw friends from app.peers (game.netRender).
+    function inParty() { return !!(window.Net && Net.inParty()); }
+    function guest() { return inParty() && !Net.isHost(); }
+    app.peers = new Map();
+    app.netSeed = 0;
+    const partyRes = new Map();
+    const shared = (o) => { const out = {}; for (const k of cfg.shared || []) if (o[k] != null) out[k] = o[k]; return out; };
+    app.startParty = (mode) => {
+      if (guest()) { Net.toast('<span>The host picks the mode. Hang tight!</span>'); return; }
+      app.netSeed = inParty() ? 1 + Math.floor(Math.random() * 1e6) : 0;
+      partyRes.clear();
+      if (inParty()) Net.send({ t: 'start', mode, opts: shared(app.opts), seed: app.netSeed });
+      app.start(mode);
+    };
+    const lower = () => !!(window.Scores && Scores.board(cfg.id, app.mode) && Scores.board(cfg.id, app.mode).lower) || !!cfg.liveLower;
+    function partyResult(pb) {
+      const el = $('kResParty');
+      if (!inParty()) { el.innerHTML = ''; return; }
+      let mine = null;
+      if (pb && pb.game === cfg.id && window.Scores) { const b = Scores.board(cfg.id, pb.mode); mine = { v: pb.value, txt: b ? Scores.FMT[b.fmt](pb.value) : String(pb.value) }; }
+      else if (game.netScore) mine = game.netScore();
+      if (mine) { partyRes.set(Net.code, Object.assign({ name: (window.Profile && Profile.name) || 'You', color: window.Profile ? Profile.color() : '#888' }, mine)); Net.send({ t: 'res', v: mine.v, txt: mine.txt }); }
+      drawPartyRes();
+    }
+    function drawPartyRes() {
+      const el = $('kResParty');
+      if (!inParty() || !partyRes.size) { el.innerHTML = ''; return; }
+      const lo = lower(), rows = Array.from(partyRes, ([c, r]) => Object.assign({ c }, r)).sort((a, b) => (lo ? a.v - b.v : b.v - a.v));
+      const waiting = Net.players().filter((p) => !partyRes.has(p.code)).length;
+      el.innerHTML = `<div class="lb-head"><span>PARTY</span><em>${waiting ? waiting + ' still playing…' : rows[0].c === Net.code ? 'YOU WIN THE PARTY!' : esc(rows[0].name) + ' WINS!'}</em></div><div class="lb-list">${rows.map((r, i) => `<div class="lb-row${r.c === Net.code ? ' me' : ''}${i === 0 ? ' top1' : ''}"><span class="lb-rank">${i + 1}</span>${window.Profile ? Profile.avatar(r.name, 'sm') : ''}<span class="lb-name">${esc(r.name)}</span><b>${esc(r.txt)}</b></div>`).join('')}</div>`;
+    }
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    function drawParty() {
+      const el = $('kParty');
+      const on = inParty();
+      ovs.menu.classList.toggle('k-guest', guest());
+      if (!on) { el.innerHTML = ''; return; }
+      const ps = Net.players(), host = ps.find((p) => p.host);
+      el.innerHTML = `<div class="k-party-in"><div class="k-party-who">${ps.map((p) => `<span class="k-pp" title="${esc(p.name)}">${window.Profile ? Profile.avatar(p.name, 'sm') : ''}<b>${esc(p.name)}</b>${p.host ? '<i>★</i>' : ''}</span>`).join('')}</div>
+        <div class="k-party-msg">${guest() ? 'Waiting for <b>' + esc(host ? host.name : 'the host') + '</b> to pick a mode…' : 'You\'re the host. Pick a mode to start for everyone.'}</div></div>`;
+      $('kResults').classList.toggle('k-guest', guest());
+    }
+    let stT = 0, liveT = 0;
+    function netTick(dt) {
+      if (!inParty()) { if (app.peers.size) { app.peers.clear(); if (game.netRender) game.netRender(app.peers, dt); } $('kLive').hidden = true; return; }
+      stT += dt; liveT += dt;
+      if (stT >= 0.1) { stT = 0; Net.send({ t: 'st', s: game.netState ? game.netState() : null, sc: game.netScore ? game.netScore() : null }); }
+      const now = performance.now();
+      for (const [c, p] of app.peers) if (now - p.t > 4000 || !Net.party.players.has(c)) app.peers.delete(c);
+      if (game.netRender) game.netRender(app.peers, dt);
+      if (liveT >= 0.25) { liveT = 0; drawLive(); }
+    }
+    function drawLive() {
+      const el = $('kLive');
+      const me = game.netScore ? game.netScore() : null;
+      const rows = [];
+      if (me) rows.push({ c: Net.code, name: (window.Profile && Profile.name) || 'You', v: me.v, txt: me.txt, me: true });
+      for (const [c, p] of app.peers) if (p.sc) rows.push({ c, name: p.name, v: p.sc.v, txt: p.sc.txt });
+      if (rows.length < 2) { el.hidden = true; return; }
+      const lo = lower(); rows.sort((a, b) => (lo ? a.v - b.v : b.v - a.v));
+      el.hidden = false;
+      el.innerHTML = rows.map((r, i) => `<div class="k-lv${r.me ? ' me' : ''}"><span>${i + 1}</span>${window.Profile ? Profile.avatar(r.name, 'sm') : ''}<em>${esc(r.name)}</em><b>${esc(r.txt)}</b></div>`).join('');
+    }
+    if (window.Net) {
+      Net.on('party', () => { drawParty(); if (!inParty()) app.peers.clear(); });
+      Net.on('start', (m) => {
+        if (Net.isHost()) return;
+        Object.assign(app.opts, shared(m.opts || {}));
+        for (const k of cfg.shared || []) if (m.opts && m.opts[k] != null && game.option) game.option(k, m.opts[k]);
+        app.netSeed = m.seed; partyRes.clear();
+        app.start(m.mode);
+      });
+      Net.on('menu', () => { if (!Net.isHost() && app.state !== 'menu') app.toMenu(); });
+      Net.on('st', (m, from) => {
+        const pl = Net.party && Net.party.players.get(from);
+        if (!pl) return;
+        const p = app.peers.get(from) || {};
+        app.peers.set(from, Object.assign(p, { name: pl.name, color: pl.color, s: m.s, sc: m.sc, t: performance.now() }));
+      });
+      Net.on('ev', (m, from) => { if (game.netEvent) game.netEvent(m, from); });
+      Net.on('res', (m, from) => { const pl = Net.party && Net.party.players.get(from); partyRes.set(from, { name: pl ? pl.name : '?', v: m.v, txt: m.txt }); drawPartyRes(); });
+      Net.on('joined', () => { if (app.state === 'play' && Net.isHost()) Net.toast('<span>Your friend will join the next round.</span>'); });
+      drawParty();
+    }
     K.current = app;
     app.show('menu');
     requestAnimationFrame(frame);

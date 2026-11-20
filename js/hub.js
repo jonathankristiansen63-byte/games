@@ -157,6 +157,7 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
   if (window.Profile) Profile.onChange(drawProfile);
   $('hubProfile').addEventListener('click', () => window.Profile && Profile.ask());
   $('hubBoards').addEventListener('click', () => window.Scores && Scores.open());
+  $('hubFriends').addEventListener('click', () => window.Net && Net.openFriends());
 
   // snowfall on the hub background
   const cv = $('hubSnow'), cx = cv.getContext('2d');

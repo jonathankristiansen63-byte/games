@@ -352,13 +352,13 @@
     },
     option(k, v) { if (k === 'jacket') this.rider.setColor('jacket', v); },
 
-    reset(auto) {
+    reset(auto, sd) {
       for (const C of Array.from(chunks.values())) dropChunk(C, this.scene);
-      seed = 1 + Math.floor(Math.random() * 9000);
+      seed = sd ? 1 + (sd % 9000) : 1 + Math.floor(Math.random() * 9000);
       this.auto = auto;
       const z = -20;
       this.st = {
-        pos: new V3(cx(z), 0, z), vel: new V3(0, 0, -6), heading: 0, steerS: 0, grounded: true, air: null,
+        pos: new V3(cx(z) + (auto ? 0 : K.partySlot().off * 2.6), 0, z), vel: new V3(0, 0, -6), heading: 0, steerS: 0, grounded: true, air: null,
         crashT: 0, invuln: 0, tumble: new THREE.Quaternion(), tumbleV: new V3(), hearts: 3, coins: 0, smash: 0, dist: 0, trickPts: 0,
         time: 0, timer: 60, topSpeed: 0, tricks: 0, bestTrick: null, jumpQ: false, compress: 0, boostT: 0, over: false, overT: 0,
       };
@@ -372,7 +372,7 @@
     start(mode, opts) {
       this.mode = mode;
       this.rider.setColor('jacket', opts.jacket || '#ff6a2b');
-      this.reset(false);
+      this.reset(false, this.app.netSeed);
       const h = this.app.hud;
       h.innerHTML = `
         <div class="k-tl"><div class="k-hearts" id="sHearts"></div><div class="k-pill" style="margin-top:10px">${mode === 'gold' ? 'GOLD RUSH' : 'ENDLESS'}</div></div>
@@ -654,20 +654,21 @@
       if (st.crashT > 0) {
         this.body.quaternion.setFromAxisAngle(AY, -st.heading).multiply(st.tumble);
         this.pivot.quaternion.identity();
-        rider.setPose(SLED_POSES.crash, 10);
+        rider.setPose(SLED_POSES.crash, 10); this.poseKey = 'crash';
       } else if (!st.grounded && st.air) {
         const a = st.air;
         this.body.quaternion.setFromAxisAngle(AY, -st.heading);
         this.pivot.position.y = 0.45;
         this.sled.position.y = -0.45;
         this.pivot.quaternion.setFromAxisAngle(AY, -a.spin).multiply(_q2.setFromAxisAngle(AX, a.flip));
-        rider.setPose(SLED_POSES.air, 8);
+        rider.setPose(SLED_POSES.air, 8); this.poseKey = 'air';
       } else {
         const n = normal(p.x, p.z, _n);
         this.body.quaternion.setFromUnitVectors(UP, n).multiply(_q2.setFromAxisAngle(AY, -st.heading));
         this.body.quaternion.multiply(_q2.setFromAxisAngle(AZ, -(st.steerS || 0) * 0.12 * Math.min(1, spd / 10)));
         this.pivot.quaternion.identity();
-        rider.setPose(st.brake ? SLED_POSES.brake : st.tuck ? SLED_POSES.tuck : SLED_POSES.ride, 7);
+        this.poseKey = st.brake ? 'brake' : st.tuck ? 'tuck' : 'ride';
+        rider.setPose(SLED_POSES[this.poseKey], 7);
       }
       if (st.grounded || st.crashT > 0) { this.pivot.position.y = 0; this.sled.position.y = -st.compress * 0.3; }
       this.body.visible = st.invuln <= 0 || Math.floor(st.invuln * 10) % 2 === 0;
@@ -716,6 +717,25 @@
       cam.position.copy(st.pos).addScaledVector(this.camDir, -6);
       cam.position.y = st.pos.y + 2.4;
       cam.lookAt(_v.copy(st.pos).addScaledVector(this.camDir, 5));
+    },
+    // ---------- multiplayer: friends sled the same mountain ----------
+    netState() { return { p: K.r3(this.body.position), q: K.rq(this.body.quaternion), v: K.rq(this.pivot.quaternion), k: this.poseKey || 'ride', c: '#' + this.rider.mat.jacket.color.getHexString(), o: this.st.over ? 1 : 0 }; },
+    netScore() { const gold = this.mode === 'gold', st = this.st; return gold ? { v: st.coins, txt: st.coins + ' coins' } : { v: this._score(), txt: K.fmt(this._score()) }; },
+    netRender(peers, dt) {
+      if (!this.ghosts) this.ghosts = new K.Ghosts(this.scene, (p) => {
+        const body = new THREE.Group(), pivot = new THREE.Group(), sled = buildSled();
+        const r = new K.Rig({ jacket: p.color || 0x1fb6ff, pants: 0x2a3550, hat: 'beanie', hatColor: 0xffffff, scarf: 0xffd23f });
+        r.root.position.set(0, 0.02, 0.26); r.snap(SLED_POSES.ride); sled.add(r.root); pivot.add(sled); body.add(pivot); K.shadow(body);
+        body.userData = { pivot, rig: r, paint: '' };
+        return body;
+      }, (obj, s, dt2, fresh) => {
+        const u = obj.userData;
+        K.smoothTo(obj, s.p, s.q, dt2, fresh);
+        u.pivot.quaternion.slerp(_q.set(s.v[0], s.v[1], s.v[2], s.v[3]), fresh ? 1 : 1 - Math.exp(-14 * dt2));
+        if (s.c && s.c !== u.paint) { u.paint = s.c; u.rig.setColor('jacket', s.c); }
+        u.rig.setPose(SLED_POSES[s.k] || SLED_POSES.ride, 8); u.rig.update(dt2);
+      }, 2.1);
+      this.ghosts.update(this.mode === 'attract' || this.auto ? new Map() : peers, dt);
     },
     render() { this.stage.render(); },
   };

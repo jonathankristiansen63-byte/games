@@ -538,7 +538,8 @@
       this.mode = mode;
       this.golfer.setColor('jacket', opts.shirt || '#ff4d5e');
       const all = HOLES.map((h) => h.i);
-      this.order = mode === 'quick' ? all.sort(() => Math.random() - 0.5).slice(0, 3).sort((a, b) => a - b) : all;
+      const rnd = this.app.netSeed ? K.rng(this.app.netSeed) : Math.random;
+      this.order = mode === 'quick' ? all.map((i) => [i, rnd()]).sort((a, b) => a[1] - b[1]).slice(0, 3).map((x) => x[0]).sort((a, b) => a - b) : all;
       this.card = [];
       this.hi = -1;
       this.app.hud.innerHTML = `
@@ -874,6 +875,25 @@
       const r = this._rel();
       e.total.textContent = 'TOTAL ' + (r === 0 ? 'E' : r > 0 ? '+' + r : r);
     },
+    // ---------- multiplayer: see your friends' balls around the course ----------
+    netState() {
+      const H = this.H, b = this.b;
+      if (!H || !b || this.state === 'intro') return { h: -1 };
+      return { h: H.i, p: [Math.round((H.ox + b.p.x) * 100) / 100, Math.round(b.p.y * 100) / 100, Math.round((H.oz + b.p.z) * 100) / 100], in: b.mode === 'cup' || b.mode === 'water' ? 1 : 0 };
+    },
+    netScore() { const r = this._rel(); return { v: r, txt: (r === 0 ? 'E' : r > 0 ? '+' + r : r) + ' · H' + Math.min(this.order.length, this.hi + 1) }; },
+    netRender(peers, dt) {
+      if (!this.ghosts) this.ghosts = new K.Ghosts(this.scene, (p) => {
+        const g = new THREE.Group();
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(BR, 20, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, emissive: new THREE.Color(p.color || '#1fb6ff'), emissiveIntensity: 0.35 }));
+        ball.castShadow = true;
+        const ring = new THREE.Mesh(new THREE.RingGeometry(BR * 1.6, BR * 2.3, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: p.color || '#1fb6ff', transparent: true, opacity: 0.8, depthWrite: false }));
+        ring.position.y = -BR + 0.01;
+        g.add(ball, ring);
+        return g;
+      }, (obj, s, dt2, fresh) => { obj.visible = s.h >= 0 && !s.in; if (s.p) K.smoothTo(obj, s.p, null, dt2, fresh, 16); }, 0.55);
+      this.ghosts.update(this.mode === 'attract' ? new Map() : peers, dt);
+    },
     render() { this.stage.render(); },
   };
   // expose for tests
@@ -883,7 +903,7 @@
   K.loadTextures([]).then(() => {
     Game.init();
     const app = K.App({
-      id: 'golf', title: 'MINI GOLF', tag: 'SUMMER · 3D', stage: Game.stage, game: Game, menuLabel: 'MENU', noRestartKey: true,
+      id: 'golf', title: 'MINI GOLF', liveLower: true, tag: 'SUMMER · 3D', stage: Game.stage, game: Game, menuLabel: 'MENU', noRestartKey: true,
       blurb: 'Nine crazy holes by the sea: a windmill, a ramp jump, a loop-the-loop, sliding walls, a volcano, bumpers and a castle gate.',
       options: [{ id: 'shirt', label: 'SHIRT', type: 'color', choices: SHIRTS.map((c) => ({ id: c })) }],
       modes: [

@@ -347,7 +347,7 @@
       this.auto = auto;
       const sp = park.spawn;
       this.st = {
-        pos: new V3(sp[0], 0, sp[2]), vel: new V3(), heading: sp[3], sw: false, grounded: true, air: null, grind: null, manual: null,
+        pos: new V3(sp[0] + (auto ? 0 : K.partySlot().off * 1.8), 0, sp[2]), vel: new V3(), heading: sp[3], sw: false, grounded: true, air: null, grind: null, manual: null,
         crashT: 0, tumble: new Q(), tumbleV: new V3(), charge: 0, jumpQ: false, steerS: 0, compress: 0, resid: 0, lastGround: 0,
         combo: { pts: 0, mult: 0, timer: 0, names: [] }, score: 0, time: 0, timer: SESSION, over: false, overT: 0, tricks: 0, bestTrick: null, bestCombo: 0, railCool: 0, letters: 0, pushT: 0,
       };
@@ -807,13 +807,38 @@
       else if (st.air && st.air.t > 0.15) live = this._airName(st.air).name;
       this.app.live(live);
     },
+    // ---------- multiplayer: friends skate the same park ----------
+    netState() {
+      const k = Object.keys(SP).find((n) => SP[n] === this.rider.target) || 'ride';
+      return { p: K.r3(this.root.position), q: K.rq(this.root.quaternion), v: K.rq(this.pivot.quaternion), f: K.rq(this.flipG.quaternion), k, c: '#' + this.rider.mat.jacket.color.getHexString() };
+    },
+    netScore() { return { v: Math.round(this.st.score), txt: K.fmt(this.st.score) }; },
+    netRender(peers, dt) {
+      if (!this.ghosts) this.ghosts = new K.Ghosts(this.scene, (p) => {
+        const root = new THREE.Group(), pivot = new THREE.Group(), body = new THREE.Group(), flipG = new THREE.Group(), board = boardMesh();
+        flipG.position.y = 0.09; board.position.y = -0.09; flipG.add(board); body.add(flipG);
+        const r = new K.Rig({ jacket: p.color || 0xff2e63, pants: 0x2a3550, hat: 'cap', hatColor: 0x1b1f2a, scarf: false, boots: 0xf2f2f2, gloves: 0xe8b796 });
+        r.root.rotation.y = -Math.PI / 2; r.root.position.y = 0.12; r.snap(SP.ride); body.add(r.root);
+        pivot.position.y = 0.9; body.position.y = -0.9; pivot.add(body); root.add(pivot); K.shadow(root);
+        root.userData = { pivot, flipG, rig: r, paint: '' };
+        return root;
+      }, (obj, s, dt2, fresh) => {
+        const u = obj.userData, f = fresh ? 1 : 1 - Math.exp(-16 * dt2);
+        K.smoothTo(obj, s.p, s.q, dt2, fresh, 16);
+        u.pivot.quaternion.slerp(_q.set(s.v[0], s.v[1], s.v[2], s.v[3]), f);
+        u.flipG.quaternion.slerp(_q.set(s.f[0], s.f[1], s.f[2], s.f[3]), Math.min(1, f * 2));
+        if (s.c && s.c !== u.paint) { u.paint = s.c; u.rig.setColor('jacket', s.c); }
+        u.rig.setPose(SP[s.k] || SP.ride, 10); u.rig.update(dt2);
+      }, 2.15);
+      this.ghosts.update(this.auto ? new Map() : peers, dt);
+    },
     render() { this.stage.render(); },
   };
 
   const SHIRTS = ['#2bd97c', '#ff2e63', '#1fb6ff', '#ffd23f', '#9b5cff', '#ff8a1a', '#f2f4f8', '#1b1f2a'];
   Game.init();
   const app = K.App({
-    id: 'skate', title: 'SKATE PARK', tag: 'SUMMER · 3D', stage: Game.stage, game: Game,
+    id: 'skate', title: 'SKATE PARK', shared: ['park'], tag: 'SUMMER · 3D', stage: Game.stage, game: Game,
     blurb: 'A concrete plaza and a sunset bowl. Ollie, flip, grab and grind, link it all with manuals and stack up huge combos.',
     options: [
       { id: 'park', label: 'PARK', choices: [{ id: 'plaza', name: 'City Plaza' }, { id: 'bowl', name: 'Sunset Bowl' }] },

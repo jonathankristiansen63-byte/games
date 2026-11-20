@@ -583,6 +583,7 @@
       e.power.textContent = rapid ? 'RAPID MITTEN ' + Math.ceil(st.rapid) + 's' : 'GIANT ×' + st.giant;
       e.duck.classList.toggle('on', this.camY < 0.9 && !st.over);
     },
+    netScore() { return { v: this.st.score, txt: K.fmt(this.st.score) }; },
     render() { this.stage.render(); },
   };
 

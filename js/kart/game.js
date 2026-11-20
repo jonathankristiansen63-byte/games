@@ -255,22 +255,35 @@
 
     load(id, attract) {
       const def = TRACKS.find((t) => t.id === id) || TRACKS[0];
-      if (this.track && this.track.def.id === def.id && this.karts) { this._grid(attract); return; }
-      K.dispose(this.world); this.scene.remove(this.world);
-      this.world = new THREE.Group(); this.scene.add(this.world);
-      const tr = (this.track = buildTrack(def));
-      const T = THEMES[def.theme];
-      this.stage.theme(T);
-      this._buildTrackMeshes(tr, def);
-      // karts
+      if (!(this.track && this.track.def.id === def.id)) {
+        K.dispose(this.world); this.scene.remove(this.world);
+        this.world = new THREE.Group(); this.scene.add(this.world);
+        const tr = (this.track = buildTrack(def));
+        this.stage.theme(THEMES[def.theme]);
+        this._buildTrackMeshes(tr, def);
+      }
+      // karts: you, friends in your party, then computer racers to fill six
       if (this.karts) for (const k of this.karts) this.scene.remove(k.mesh);
       const col = (this.app && this.app.opts.color) || '#ff2e63';
-      const all = [{ name: 'You', color: new THREE.Color(col).getHex(), helmet: 0xf4f6f9, skill: 1, player: true }].concat(RACERS);
+      const party = !attract && window.Net && Net.inParty() ? Net.players() : null;
+      const me = { key: party ? Net.code : 'me', name: 'You', color: new THREE.Color(col).getHex(), helmet: 0xf4f6f9, skill: 1, player: true };
+      const others = party ? party.filter((p) => !p.me).sort((a, b) => (a.code < b.code ? -1 : 1)).map((p) => ({ key: p.code, name: p.name, color: new THREE.Color(p.color || '#888').getHex(), helmet: 0xffffff, skill: 1, peer: true, puppet: true })) : [];
+      const nAI = Math.max(0, 5 - others.length);
+      const ais = RACERS.slice(0, nAI).map((r, i) => Object.assign({}, r, { key: 'ai' + i, puppet: !!party && !Net.isHost() }));
+      const all = [me].concat(others, ais);
       this.karts = all.map((r, i) => {
-        const mesh = buildKart(r.color, r.helmet);
-        this.scene.add(mesh);
-        return { ...r, idx: i, mesh };
+        const mesh = buildKart(r.color, r.helmet); this.scene.add(mesh);
+        if (r.peer) { const tag = K.nameTag(r.name, Net.party.players.get(r.key) && Net.party.players.get(r.key).color); tag.position.y = 2; mesh.add(tag); }
+        return Object.assign({}, r, { idx: i, mesh });
       });
+      // grid slots: identical on every screen (first half of the AI, players sorted by code, rest of the AI)
+      const byKey = (k) => this.karts.find((x) => x.key === k).idx;
+      if (attract) this.slots = [1, 2, 3, 4, 5, 0];
+      else if (!party) this.slots = [1, 2, 3, 0, 4, 5];
+      else {
+        const players = [Net.code].concat(others.map((o) => o.key)).sort(), half = Math.ceil(nAI / 2);
+        this.slots = ais.slice(0, half).map((a) => byKey(a.key)).concat(players.map(byKey), ais.slice(half).map((a) => byKey(a.key)));
+      }
       this._grid(attract);
     },
     _buildTrackMeshes(tr, def) {
@@ -400,16 +413,16 @@
     _grid(attract) {
       const tr = this.track;
       this.attract = attract;
-      const order = attract ? [1, 2, 3, 4, 5, 0] : [1, 2, 3, 0, 4, 5];
-      order.forEach((ki, slot) => {
+      this.slots.forEach((ki, slot) => {
         const k = this.karts[ki], row = Math.floor(slot / 2), lat = slot % 2 ? 3 : -3;
         const s = -8 - row * 6.5 - (slot % 2) * 2;
         const p = tr.at(s, lat);
         Object.assign(k, {
           x: p.x, z: p.z, h: tr.heading(s), speed: 0, slide: 0, steer: 0, drift: 0, driftT: 0, boostT: 0, spinT: 0, spinA: 0, bumpT: 0, item: null, itemCool: 0,
           ti: tr.locate(p.x, p.z).i, prog: s, s: ((s % tr.L) + tr.L) % tr.L, lat, lap: 0, finished: false, time: 0, lapStart: 0, bestLap: null, lapTimes: [], offroad: false,
-          aiLat: (Math.random() - 0.5) * 3, aiVmax: VMAX * k.skill, hop: 0, immune: 0, ai: !k.player || attract,
+          aiLat: (Math.random() - 0.5) * 3, aiVmax: VMAX * k.skill, hop: 0, immune: 0, ai: (!k.player && !k.peer) || attract, net: null, gone: false,
         });
+        k.mesh.visible = true;
         k.mesh.position.set(k.x, 0, k.z); k.mesh.rotation.set(0, k.h, 0);
       });
       for (const b of this.boxes) { b.t = 0; b.mesh.visible = true; }
@@ -420,7 +433,7 @@
       this.skids.clear(); this.sparks.clear(); this.dust.clear();
       this.race = { t: 0, count: attract ? 0 : 4.2, go: attract, finishT: 0, done: false, lastBeep: 5 };
       this.finishCount = 0;
-      this.player = this.karts[0];
+      this.player = this.karts.find((k) => k.player);
       this._snapCam(attract ? this.karts[1] : this.player);
     },
     start(mode, opts) {
@@ -428,7 +441,7 @@
       this._paint(opts.color || '#ff2e63');
       this.app.hud.innerHTML = `
         <div class="k-tl"><div class="k-label">LAP</div><div class="k-big" id="rLap">1/${LAPS}</div><div class="k-mid" id="rTime" style="margin-top:6px">0:00.00</div><div class="kr-small" id="rBest"></div></div>
-        <div class="k-tr"><div class="k-huge" id="rPos">4<small>th</small></div><div class="k-label" style="margin-top:2px">OF 6</div></div>
+        <div class="k-tr"><div class="k-huge" id="rPos">4<small>th</small></div><div class="k-label" style="margin-top:2px">OF ${this.karts.length}</div></div>
         <div class="k-tc"><div class="kr-lights" id="rLights"><i></i><i></i><i></i></div><div class="k-pill" id="rMsg" hidden></div></div>
         <div class="k-bl"><span class="k-huge" id="rSpeed">0</span><span class="k-unit">KM/H</span><div class="kr-drift" id="rDrift"><i></i></div></div>
         <div class="k-br kr-br"><canvas id="rMap" width="170" height="170"></canvas><div class="kr-item" id="rItem"></div></div>`;
@@ -451,7 +464,8 @@
         if (n !== race.lastBeep && n <= 3 && n >= 1) { race.lastBeep = n; K.Audio.beep(false); }
         if (race.count <= 0.2) { race.go = true; race.t = 0; K.Audio.beep(true); this.app.pop('GO!', '', 'perfect'); for (const k of this.karts) k.lapStart = 0; }
       }
-      for (const k of this.karts) this._kart(k, dt);
+      this._netIn();
+      for (const k of this.karts) { if (k.puppet) this._puppet(k, dt); else this._kart(k, dt); }
       this._collideKarts();
       // item boxes respawn
       for (const b of this.boxes) if (b.t > 0) { b.t -= dt; if (b.t <= 0) b.mesh.visible = true; }
@@ -459,7 +473,7 @@
       for (let i = this.hazards.length - 1; i >= 0; i--) { const hz = this.hazards[i]; hz.life -= dt; if (hz.life <= 0) { this.world.remove(hz.mesh); this.hazards.splice(i, 1); } }
       this._rockets(dt);
       // positions
-      const order = this.karts.slice().sort((a, b) => (b.finished ? 1e9 - b.finishOrder : b.prog) - (a.finished ? 1e9 - a.finishOrder : a.prog));
+      const order = this.karts.filter((k) => !k.gone).sort((a, b) => (a.finished && b.finished ? a.finishTime - b.finishTime : a.finished ? -1 : b.finished ? 1 : b.prog - a.prog));
       order.forEach((k, i) => { k.place = i + 1; });
       if (!this.attract && this.player.finished && !race.done) { race.finishT += dt; if (race.finishT > 3.2) { race.done = true; this._results(); } }
       void tr;
@@ -595,16 +609,69 @@
       const fx = Math.sin(k.h), fz = Math.cos(k.h);
       if (it === 'turbo') { k.boostT = Math.max(k.boostT, 1.6); if (k === this.player) { K.Audio.whoosh(); this.app.pop('TURBO!', '', 'perfect'); } }
       if (it === 'oil') {
-        const m = new THREE.Mesh(this.oilGeo, this.oilMat); m.position.set(k.x - fx * 2.4, 0.03, k.z - fz * 2.4); m.receiveShadow = true; this.world.add(m);
-        this.hazards.push({ x: m.position.x, z: m.position.z, mesh: m, life: 25, owner: k, age: 0 });
+        this._oil(k.x - fx * 2.4, k.z - fz * 2.4, k);
+        if (this._shared()) Net.send({ t: 'ev', e: 'oil', x: k.x - fx * 2.4, z: k.z - fz * 2.4, o: k.key });
         if (k === this.player) K.Audio.burst(0.3, 400, 0.3);
       }
       if (it === 'rocket') {
-        const ahead = this.karts.filter((o) => o !== k && !o.finished && o.prog > k.prog + 2).sort((a, b) => a.prog - b.prog)[0];
-        const m = this.rocketMesh.clone(); this.scene.add(m);
-        this.rockets.push({ s: k.s + 2, lat: k.lat, prog: k.prog + 2, target: ahead || null, mesh: m, life: 6, owner: k, speed: Math.max(42, k.speed + 18) });
+        const ahead = this.karts.filter((o) => o !== k && !o.gone && !o.finished && o.prog > k.prog + 2).sort((a, b) => a.prog - b.prog)[0];
+        const sp = Math.max(42, k.speed + 18);
+        this._rocket(k, ahead, k.s + 2, k.lat, k.prog + 2, sp);
+        if (this._shared()) Net.send({ t: 'ev', e: 'rocket', o: k.key, tg: ahead ? ahead.key : null, s: k.s + 2, lat: k.lat, prog: k.prog + 2, sp });
         if (k === this.player) { K.Audio.burst(0.5, 2400, 0.3, 1, 'bandpass'); this.app.pop('ROCKET!', ahead ? 'LOCKED ON ' + ahead.name.toUpperCase() : '', ''); }
       }
+    },
+    _oil(x, z, owner) {
+      const m = new THREE.Mesh(this.oilGeo, this.oilMat); m.position.set(x, 0.03, z); m.receiveShadow = true; this.world.add(m);
+      this.hazards.push({ x, z, mesh: m, life: 25, owner, age: 0 });
+    },
+    _rocket(owner, target, s, lat, prog, speed) {
+      const m = this.rocketMesh.clone(); this.scene.add(m);
+      this.rockets.push({ s, lat, prog, target: target || null, mesh: m, life: 6, owner, speed });
+    },
+
+    // ---------- multiplayer ----------
+    _shared() { return !this.attract && window.Net && Net.inParty(); },
+    // read friends' karts (and the host's computer racers) from the latest network states
+    _netIn() {
+      if (!this._shared()) return;
+      const peers = this.app.peers, host = Net.party.hostCode;
+      for (const k of this.karts) {
+        if (k.peer) {
+          const p = peers.get(k.key);
+          if (p && p.s && p.s.me) { k.net = p.s.me; if (p.s.c && p.s.c !== k.paint) { k.paint = p.s.c; k.mesh.bodyMat.color.set(p.s.c); k.mesh.driver.setColor('jacket', p.s.c); } }
+          k.gone = !Net.party.players.has(k.key);
+          k.mesh.visible = !k.gone;
+        } else if (k.puppet) {
+          const p = peers.get(host), i = +k.key.slice(2);
+          if (p && p.s && p.s.ai && p.s.ai[i]) k.net = p.s.ai[i];
+        }
+      }
+    },
+    _puppet(k, dt) {
+      const n = k.net, tr = this.track;
+      if (!n) return;
+      const f = 1 - Math.exp(-12 * dt);
+      if ((k.x - n[0]) ** 2 + (k.z - n[1]) ** 2 > 100) { k.x = n[0]; k.z = n[1]; } else { k.x += (n[0] - k.x) * f; k.z += (n[1] - k.z) * f; }
+      k.h += wrapPi(n[2] - k.h) * f;
+      k.speed = n[3]; k.drift = n[4]; k.boostT = n[5] ? 0.15 : 0; k.prog = n[6]; k.lap = n[7];
+      if (n[8] && !k.finished) { k.finished = true; k.finishTime = n[9]; }
+      if (n[10]) { k.spinT = 0.15; k.spinA += dt * 13; } else k.spinT = 0;
+      const loc = tr.locate(k.x, k.z, k.ti); k.ti = loc.i; k.lat = loc.lat; k.s = ((loc.s % tr.L) + tr.L) % tr.L;
+    },
+    netState() {
+      const r = (v, d) => Math.round(v * d) / d;
+      const pack = (k) => [r(k.x, 100), r(k.z, 100), r(k.h, 1000), r(k.speed, 10), k.drift, k.boostT > 0 ? 1 : 0, r(k.prog, 10), k.lap, k.finished ? 1 : 0, k.finished ? r(k.finishTime, 100) : 0, k.spinT > 0 ? 1 : 0];
+      const s = { me: pack(this.player), c: '#' + this.player.mesh.bodyMat.color.getHexString() };
+      if (window.Net && Net.isHost()) s.ai = this.karts.filter((k) => /^ai/.test(k.key)).sort((a, b) => +a.key.slice(2) - +b.key.slice(2)).map(pack);
+      return s;
+    },
+    netScore() { const p = this.player; return { v: p.place || 9, txt: p.finished ? K.fmtTime(p.finishTime) : ordinal(p.place || 1) + ' · LAP ' + Math.min(LAPS, p.lap + 1) }; },
+    netEvent(m) {
+      if (this.attract || !this.karts) return;
+      const by = (key) => this.karts.find((k) => k.key === key);
+      if (m.e === 'oil') this._oil(m.x, m.z, by(m.o));
+      if (m.e === 'rocket') { const tg = m.tg ? by(m.tg) : null; this._rocket(by(m.o), tg, m.s, m.lat, m.prog, m.sp); if (tg === this.player) this.app.pop('INCOMING ROCKET!', '', 'bad'); }
     },
     _rockets(dt) {
       const tr = this.track;
@@ -618,8 +685,9 @@
         r.mesh.rotation.set(0, tr.heading(r.s), 0);
         this.sparks.emit(p.x - Math.sin(r.mesh.rotation.y) * 0.8, 0.7, p.z - Math.cos(r.mesh.rotation.y) * 0.8, 0, 0.5, 0, 2, 1, 0.2, 0.4, 0xffa040);
         let hit = null;
-        for (const k of this.karts) if (k !== r.owner && k.spinT <= 0 && (k.x - p.x) ** 2 + (k.z - p.z) ** 2 < 3.2) hit = k;
-        if (hit) { this._spin(hit, 'ROCKET HIT!'); this.sparks.emit(p.x, 0.8, p.z, 0, 3, 0, 60, 7, 0.35, 0.8, 0xff7a2a); }
+        for (const k of this.karts) if (k !== r.owner && !k.gone && k.spinT <= 0 && (k.x - p.x) ** 2 + (k.z - p.z) ** 2 < 3.2) hit = k;
+        // whoever drives the kart that got hit spins it out; everyone else just sees the bang
+        if (hit) { if (!hit.puppet) this._spin(hit, 'ROCKET HIT!'); this.sparks.emit(p.x, 0.8, p.z, 0, 3, 0, 60, 7, 0.35, 0.8, 0xff7a2a); K.Audio.thud(0.4); }
         if (hit || r.life <= 0 || (t && r.prog > t.prog + 8)) { this.scene.remove(r.mesh); this.rockets.splice(i, 1); }
       }
     },
@@ -632,9 +700,10 @@
       const ks = this.karts;
       for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
         const a = ks[i], b = ks[j], dx = b.x - a.x, dz = b.z - a.z, d2 = dx * dx + dz * dz, R = KR * 2;
-        if (d2 > R * R || d2 < 1e-6) continue;
-        const d = Math.sqrt(d2), o = (R - d) / 2, nx = dx / d, nz = dz / d;
-        a.x -= nx * o; a.z -= nz * o; b.x += nx * o; b.z += nz * o;
+        if (d2 > R * R || d2 < 1e-6 || (a.puppet && b.puppet) || a.gone || b.gone) continue;
+        // only move karts this screen drives; friends' karts are moved by their own screens
+        const d = Math.sqrt(d2), nx = dx / d, nz = dz / d, o = R - d, wa = a.puppet ? 0 : b.puppet ? 1 : 0.5, wb = 1 - wa;
+        a.x -= nx * o * wa; a.z -= nz * o * wa; b.x += nx * o * wb; b.z += nz * o * wb;
         // the one behind loses a bit of speed
         const fa = Math.sin(a.h) * nx + Math.cos(a.h) * nz;
         if (fa > 0.3) a.speed *= 0.994; else if (fa < -0.3) b.speed *= 0.994;
@@ -643,7 +712,7 @@
     },
     _results() {
       const p = this.player, tr = this.track;
-      const rows = this.karts.slice().sort((a, b) => a.place - b.place).map((k) => {
+      const rows = this.karts.filter((k) => !k.gone).sort((a, b) => a.place - b.place).map((k) => {
         let t;
         if (k.finished) t = K.fmtTime(k.finishTime);
         else { const rem = tr.L * LAPS - k.prog; t = '+' + Math.max(1, Math.round(rem / Math.max(10, k.speed))) + 's'; }

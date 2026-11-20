@@ -235,13 +235,14 @@
     },
 
     // ---------- runs ----------
-    reset(mode) {
+    reset(mode, sd) {
       this.mode = mode;
-      seed = 1 + Math.floor(Math.random() * 9000);
+      seed = sd ? 1 + (sd % 9000) : 1 + Math.floor(Math.random() * 9000);
       for (const [, c] of this.chunks) for (const r of c.rings) if (r.mesh) this.scene.remove(r.mesh);
       this.chunks.clear(); this.cc = null;
       const y0 = Math.max(terrainH(0, 0), 0) + 45;
-      this.st = { pos: new V3(0, y0, 0), prev: new V3(0, y0, 0), speed: 13, pitch: 0, roll: 0, yaw: 0, dist: 0, rings: 0, timer: 45, over: false, overT: 0, crash: null, lift: 0, top: 0, time: 0, bonus: 0, maxAlt: 0 };
+      const ox = mode === 'attract' ? 0 : K.partySlot().off * 9;
+      this.st = { pos: new V3(ox, y0, 0), prev: new V3(ox, y0, 0), speed: 13, pitch: 0, roll: 0, yaw: 0, dist: 0, rings: 0, timer: 45, over: false, overT: 0, crash: null, lift: 0, top: 0, time: 0, bonus: 0, maxAlt: 0 };
       this.st.prev.copy(this.st.pos);
       this._terrain(true); this._rebuild();
       this.trail.clear(); this.spark.clear(); this.smoke.clear();
@@ -251,7 +252,7 @@
       this._snapCam();
     },
     start(mode) {
-      this.reset(mode);
+      this.reset(mode, this.app.netSeed);
       const rush = mode === 'rush';
       this.app.hud.innerHTML = `
         <div class="k-tl"><div class="k-label">ALTITUDE</div><div class="k-mid" id="pAlt">0 m</div><div class="pp-lift" id="pLift">UPDRAFT ↑</div></div>
@@ -479,6 +480,18 @@
       e.speed.textContent = Math.round(st.speed * 3.6);
       if (this.mode === 'rush') { e.main.textContent = st.rings; e.timer.textContent = Math.ceil(st.timer); e.timer.classList.toggle('k-hot', st.timer < 10); e.rings.textContent = ''; }
       else { e.main.textContent = st.dist >= 1000 ? (st.dist / 1000).toFixed(2) + ' km' : Math.round(st.dist) + ' m'; e.rings.textContent = st.rings ? st.rings + ' RINGS' : ''; }
+    },
+    // ---------- multiplayer: friends' planes in the same sky ----------
+    netState() { return { p: K.r3(this.plane.position), q: K.rq(this.plane.quaternion), o: this.st.over ? 1 : 0 }; },
+    netScore() { const st = this.st; return this.mode === 'rush' ? { v: st.rings, txt: st.rings + ' rings' } : { v: this._score(), txt: (st.dist >= 1000 ? (st.dist / 1000).toFixed(2) + ' km' : Math.round(st.dist) + ' m') }; },
+    netRender(peers, dt) {
+      if (!this.ghosts) this.ghosts = new K.Ghosts(this.scene, (p) => {
+        const g = new THREE.Group();
+        const m = new THREE.Mesh(planeGeo(), new THREE.MeshStandardMaterial({ vertexColors: true, color: new THREE.Color(p.color || '#1fb6ff').lerp(new THREE.Color(0xffffff), 0.35), side: THREE.DoubleSide, roughness: 0.75, flatShading: true }));
+        m.castShadow = true; g.add(m); g.scale.setScalar(1.5);
+        return g;
+      }, (obj, s, dt2, fresh) => { K.smoothTo(obj, s.p, s.q, dt2, fresh, 10); obj.children[0].scale.y = s.o ? 0.3 : 1; }, 0.9);
+      this.ghosts.update(this.mode === 'attract' ? new Map() : peers, dt);
     },
     render() { this.stage.render(); },
   };

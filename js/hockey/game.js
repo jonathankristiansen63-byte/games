@@ -743,6 +743,7 @@
           : [['SAVES', st.saves], ['SHOTS FACED', st.n], ['SAVE %', st.n ? Math.round((st.saves / st.n) * 1000) / 10 + '%' : '—'], ['BEST STREAK', st.bestStreak], ['LEVEL', st.level], ['BEST', K.fmt(best.get('goalie') || 0)]],
       });
     },
+    netScore() { return { v: this.st.score, txt: K.fmt(this.st.score) }; },
     render() { this.stage.render(); },
   };
 
