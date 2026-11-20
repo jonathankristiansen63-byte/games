@@ -59,6 +59,35 @@ Long Flight (distance) or Ring Rush (rings add time). W dives for speed, S climb
 
 Full Course (9 holes, par 26) or Quick Round (3 random holes). Drag back from anywhere like a slingshot and let go to putt, or aim with A / D and hold Space for power. Hold C for an overview of the hole. Water costs a stroke, and you pick up after 8.
 
+## Names and leaderboards
+
+The first time someone opens the site it asks for their name, and shows it as a letter avatar (Jonathan → **J**), also on the fake doc's account picture. Click the avatar to change it. Every game posts finished runs to a leaderboard under that name: see them on the results screen, from **LEADERBOARD** in each game's menu, or from **LEADERBOARDS** on the hub.
+
+Out of the box the boards are saved in the browser, so everyone playing on the same computer competes.
+
+### Online leaderboards (everyone, everywhere)
+
+1. Make a free project at [supabase.com](https://supabase.com).
+2. In its SQL editor, run:
+
+   ```sql
+   create table scores (
+     id bigint generated always as identity primary key,
+     game text not null, mode text not null,
+     name text not null check (char_length(name) between 1 and 16),
+     value double precision not null,
+     created_at timestamptz default now()
+   );
+   create index on scores (game, mode, value);
+   alter table scores enable row level security;
+   create policy "anyone can read" on scores for select using (true);
+   create policy "anyone can post" on scores for insert with check (true);
+   ```
+
+3. Copy the project URL and the **anon public** key (Project Settings → API) into the `ONLINE` line at the top of `js/scores.js`.
+
+The anon key is meant to be public. Anyone could post a fake score, so it's for fun between friends, not prizes.
+
 ## Code
 
 - `js/ski/` Peak Rush

@@ -51,6 +51,8 @@ window.KIT = (function () {
       const b = this.all(), p = b[id];
       const nb = p == null || (lower ? val < p : val > p);
       if (nb) { b[id] = val; K.store.set(game + '.best', b); }
+      // every finished run also goes to the leaderboard (shown on the results screen)
+      if (window.Scores && Scores.has(game, id)) K.pendingBoard = { game, mode: id, value: val };
       return nb;
     },
   });
@@ -501,12 +503,12 @@ window.KIT = (function () {
       <div class="k-flash" id="kFlash"></div>
       <div class="k-ov k-menu" id="kMenu">
         <div class="k-menu-panel">
-          <div class="k-menu-top"><a class="back-btn" href="${HUB}" title="All games">${ICON_BACK}</a><span class="k-tag">${cfg.tag || ''}</span></div>
+          <div class="k-menu-top"><a class="back-btn" href="${HUB}" title="All games">${ICON_BACK}</a><span class="k-tag">${cfg.tag || ''}</span><button class="pf-chip" data-k="profile" id="kProfile" title="Change your name"></button></div>
           <h1 class="k-title">${cfg.title}</h1>
           <p class="k-blurb">${cfg.blurb || ''}</p>
           ${optHTML}
           <div class="k-modes" id="kModes"></div>
-          <div class="k-menu-foot"><button class="ghost-btn" data-k="controls">CONTROLS</button><span class="k-keys"><kbd>M</kbd> sound · <kbd>Å</kbd> panic</span></div>
+          <div class="k-menu-foot"><button class="ghost-btn" data-k="controls">CONTROLS</button>${window.Scores && Scores.BOARDS[cfg.id] ? '<button class="ghost-btn" data-k="board">LEADERBOARD</button>' : ''}<span class="k-keys"><kbd>M</kbd> sound · <kbd>Å</kbd> panic</span></div>
         </div>
       </div>
       <div class="k-ov k-dim" id="kControls" hidden><div class="panel">
@@ -531,6 +533,7 @@ window.KIT = (function () {
         <div class="res-sub" id="kResSub"></div>
         <div class="k-res-extra" id="kResExtra"></div>
         <div class="res-grid" id="kResGrid"></div>
+        <div class="lb-wrap" id="kResBoard"></div>
         <div class="res-btns"><button class="btn-play small" data-k="again">${ICON_PLAY}PLAY AGAIN</button><button class="ghost-btn" data-k="menu">MENU</button></div>
       </div></div>
       <div class="k-ov k-dim" id="kLoading" hidden><div class="spinner"></div><div>${cfg.loading || 'LOADING…'}</div></div>`;
@@ -584,6 +587,8 @@ window.KIT = (function () {
       $('kResSub').textContent = r.sub || '';
       $('kResExtra').innerHTML = r.extra || '';
       $('kResGrid').innerHTML = (r.cells || []).map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
+      const pb = K.pendingBoard; K.pendingBoard = null;
+      if (pb && pb.game === cfg.id && window.Scores) Scores.post($('kResBoard'), pb.game, pb.mode, pb.value); else $('kResBoard').innerHTML = '';
       app.show('results');
     };
 
@@ -637,13 +642,20 @@ window.KIT = (function () {
       if (k === 'restart') app.restart();
       if (k === 'menu') app.toMenu();
       if (k === 'again') app.restart();
+      if (k === 'board' && window.Scores) Scores.open(cfg.id);
+      if (k === 'profile' && window.Profile) Profile.ask();
     });
+    const drawProfile = () => { const el = $('kProfile'); if (el && window.Profile) el.innerHTML = Profile.avatar() + '<span>' + Profile.esc(Profile.name || 'Your name') + '</span>'; };
+    drawProfile();
+    if (window.Profile) Profile.onChange(drawProfile);
 
     // ----- input -----
     const docsUp = () => !!(window.DocsDisguise && DocsDisguise.visible);
     const PREVENT = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
+    // typing a name (or any dialog open) must not drive the game
+    const typing = (e) => !!((e.target && e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]')) || document.getElementById('pfModal') || document.getElementById('lbModal'));
     window.addEventListener('keydown', (e) => {
-      if (docsUp()) return;
+      if (docsUp() || typing(e)) return;
       const c = e.code;
       if (app.state === 'play' && PREVENT.includes(c)) e.preventDefault();
       if (e.repeat) return;

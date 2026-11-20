@@ -151,6 +151,12 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
   $('gameGrid').addEventListener('click', (e) => { if (e.target.closest('[data-play]')) openGame(); });
   $('playSki').addEventListener('click', openGame);
   $('hubPanic').addEventListener('click', () => window.DocsDisguise && DocsDisguise.show());
+  // profile chip + leaderboards
+  const drawProfile = () => { if (window.Profile) $('hubProfile').innerHTML = Profile.avatar() + '<span>' + Profile.esc(Profile.name || 'Your name') + '</span>'; };
+  drawProfile();
+  if (window.Profile) Profile.onChange(drawProfile);
+  $('hubProfile').addEventListener('click', () => window.Profile && Profile.ask());
+  $('hubBoards').addEventListener('click', () => window.Scores && Scores.open());
 
   // snowfall on the hub background
   const cv = $('hubSnow'), cx = cv.getContext('2d');
@@ -234,6 +240,7 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
       ? [['GATES', r.passed + ' / ' + (r.passed + r.missed)], ['TOP SPEED', Math.round(r.topSpeed) + ' km/h'], ['BEST TIME', S.fmtTime(r.best.time)], ['TRICKS', r.tricks]]
       : [['BEST TRICK', r.bestTrick ? r.bestTrick.name : '—'], ['TRICKS', r.tricks], ['TOP SPEED', Math.round(r.topSpeed) + ' km/h'], ['TIME', S.fmtTime(r.rawTime)], ['PERSONAL BEST', S.fmt(r.best.score || 0)]];
     $('resGrid').innerHTML = cells.map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join('');
+    if (window.Scores) Scores.post($('resBoard'), 'peak', r.def.id, r.race ? Math.round(r.time * 100) / 100 : Math.round(r.score));
     showOnly('results');
   };
   $('resAgain').addEventListener('click', () => { showOnly(null); S.Game.restart(); });

@@ -85,7 +85,7 @@
       <button class="dbtn meet" title="Join a call here or present this tab to the call">${ic('video', 24)}${ic('caret', 18)}</button>
       <div class="d-share"><button class="d-share-main">${ic('lock', 18)}<span>Share</span></button><button class="d-share-dd">${ic('caret', 20)}</button></div>
       <button class="d-upgrade">Upgrade</button>
-      <div class="d-avatar"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+      <div class="d-avatar" id="dAvatar"></div>
     </div>
   </div>
   <div class="d-toolbar" id="dBar">
@@ -129,6 +129,15 @@
   <div class="d-pop" id="dPop" hidden></div>`;
 
   const $ = (id) => document.getElementById(id);
+  // account picture: the player's initial on a coloured circle once they have a name (profile.js)
+  const PERSON = '<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+  function drawAvatar() {
+    const el = $('dAvatar'), P = window.Profile;
+    if (P && P.name) { el.innerHTML = '<b>' + P.esc(P.initial()) + '</b>'; el.style.background = P.color(); el.title = P.name; el.classList.add('letter'); }
+    else { el.innerHTML = PERSON; el.style.background = ''; el.title = ''; el.classList.remove('letter'); }
+  }
+  drawAvatar();
+  if (window.Profile) Profile.onChange(drawAvatar);
   const page = $('dPage'), pop = $('dPop'), titleIn = $('dTitle'), chips = $('dChips');
 
   // ---------- rulers ----------
@@ -296,6 +305,7 @@
   };
   window.DocsDisguise = api;
   window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.closest && e.target.closest('[data-nopanic]')) return; // typing a name like Håkon
     if (e.key === 'å' || e.key === 'Å') { e.preventDefault(); e.stopPropagation(); api.toggle(); }
   }, true);
 })();
