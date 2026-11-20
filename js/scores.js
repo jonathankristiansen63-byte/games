@@ -7,7 +7,7 @@
 
   const fmtN = (n) => Math.round(n).toLocaleString('en-US');
   const fmtT = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); };
-  const FMT = { pts: fmtN, time: fmtT, coins: (v) => fmtN(v) + ' coins', rings: (v) => Math.round(v) + ' rings', par: (v) => (v === 0 ? 'E' : v > 0 ? '+' + v : String(v)) };
+  const FMT = { pts: fmtN, time: fmtT, coins: (v) => fmtN(v) + ' coins', rings: (v) => Math.round(v) + ' rings', par: (v) => (v === 0 ? 'E' : v > 0 ? '+' + v : String(v)), m: (v) => fmtN(v) + ' m' };
   // every board on the site: game -> modes (lower = lower is better)
   const BOARDS = {
     peak: { title: 'Peak Rush', boards: [{ mode: 'park', name: 'Terrain Park', fmt: 'pts' }, { mode: 'powder', name: 'Powder Forest', fmt: 'pts' }, { mode: 'slalom', name: 'Slalom Race', fmt: 'time', lower: true }, { mode: 'night', name: 'Night Mountain', fmt: 'pts' }] },
@@ -18,6 +18,8 @@
     skate: { title: 'Skate Park', boards: [{ mode: 'plaza', name: 'City Plaza', fmt: 'pts' }, { mode: 'bowl', name: 'Sunset Bowl', fmt: 'pts' }] },
     plane: { title: 'Paper Plane', boards: [{ mode: 'flight', name: 'Long Flight', fmt: 'pts' }, { mode: 'rush', name: 'Ring Rush', fmt: 'rings' }] },
     golf: { title: 'Mini Golf', boards: [{ mode: 'full', name: 'Full Course', fmt: 'par', lower: true }] },
+    wheelie: { title: 'Wheelie Run', boards: [{ mode: 'endless', name: 'Endless Road', fmt: 'pts' }, { mode: 'chal', name: 'Wheelie Challenge', fmt: 'm' }] },
+    highway: { title: 'Highway Rush', boards: [{ mode: 'rush', name: 'Rush Hour', fmt: 'pts' }, { mode: 'wrong', name: 'Wrong Way', fmt: 'pts' }, { mode: 'time', name: 'Checkpoint Run', fmt: 'm' }] },
   };
   const board = (game, mode) => (BOARDS[game] ? BOARDS[game].boards.find((b) => b.mode === mode) : null);
   const me = () => (window.Profile && Profile.name) || 'Player';

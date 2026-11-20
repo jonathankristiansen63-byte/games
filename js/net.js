@@ -5,7 +5,7 @@
   'use strict';
   const PREFIX = 'frim1-';
   const ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  const GAMES = { sled: 'Sled Rush', hockey: 'Ice Shootout', snowball: 'Snowball Fight', kart: 'Kart Racing', skate: 'Skate Park', plane: 'Paper Plane', golf: 'Mini Golf' };
+  const GAMES = { sled: 'Sled Rush', hockey: 'Ice Shootout', snowball: 'Snowball Fight', kart: 'Kart Racing', skate: 'Skate Park', plane: 'Paper Plane', golf: 'Mini Golf', wheelie: 'Wheelie Run', highway: 'Highway Rush' };
   const MAX_PARTY = 6;
   const store = {
     get(k, d) { try { const v = localStorage.getItem('friminutt.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },

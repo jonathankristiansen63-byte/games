@@ -60,6 +60,8 @@ ${trees}${mid}${extra}${skier}</svg>`;
     skate: { sky: ['#2c3a78', '#ffa36c'], far: '#b5532e', near: '#c96a3a', ground: '#c8a890' },
     plane: { sky: ['#3f6fc4', '#ffd7b0'], far: '#9ab0a0', near: '#86b060', ground: '#8ab868' },
     golf: { sky: ['#2a74d0', '#cfe8ff'], far: '#7fc8f0', near: '#ead6a4', ground: '#5fae45' },
+    wheelie: { sky: ['#2b3f86', '#ffb88a'], far: '#a86a5e', near: '#7aa04a', ground: '#e6c79a' },
+    highway: { sky: ['#162650', '#ff9a6a'], far: '#2a2f45', near: '#3a3f55', ground: '#3d4047' },
   };
   function summerArt(kind) {
     const p = SUMMER[kind], id = 'g' + (uid++);
@@ -92,19 +94,39 @@ ${trees}${mid}${extra}${skier}</svg>`;
         <g transform="translate(290 168)"><rect x="-16" y="-10" width="32" height="38" fill="#f4efe6"/><path d="M-22 -10 L0 -34 L22 -10Z" fill="#c8322a"/><g transform="rotate(20 0 -18)"><rect x="-2" y="-58" width="4" height="80" fill="#fff8ea"/><rect x="-40" y="-20" width="80" height="4" fill="#fff8ea"/></g><rect x="-6" y="14" width="12" height="14" fill="#8a5a35"/></g>
         <circle cx="180" cy="262" r="7" fill="#fff"/><circle cx="178" cy="260" r="2" fill="#e6eef8"/>`;
     }
+    if (kind === 'wheelie') {
+      mid = `<path d="M-10 168 L40 128 L80 150 L130 112 L190 160 L240 132 L300 150 L350 118 L410 150 L410 172 L-10 172Z" fill="#a86a5e"/><path d="M130 112 L150 128 L118 124Z M350 118 L368 132 L338 130Z" fill="#c98a74"/>
+        <rect x="-10" y="166" width="420" height="22" fill="#2f7fb8"/><path d="M230 172 L330 172 M250 178 L310 178" stroke="#ffd7b0" stroke-width="2" opacity=".7"/>
+        <rect x="-10" y="186" width="420" height="120" fill="#44464d"/><rect x="-10" y="184" width="420" height="4" fill="#d5dbe3"/><path d="M-10 214 L410 214" stroke="#fff" stroke-width="4" stroke-dasharray="22 18"/>
+        <g transform="translate(176 206) scale(1.35)"><circle cx="0" cy="0" r="13" fill="none" stroke="#15161a" stroke-width="5.5"/><circle cx="29" cy="-29" r="12" fill="none" stroke="#15161a" stroke-width="5.5"/>
+        <path d="M0 0 L14 -20 L29 -29 M14 -20 L-4 -22" stroke="#ff6a2b" stroke-width="5.5" stroke-linecap="round" fill="none"/><path d="M3 -22 L16 -45 L27 -36" stroke="#1b1f2a" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+        <path d="M6 -24 L14 -10 L4 -4" stroke="#2a3550" stroke-width="5.5" stroke-linecap="round" fill="none"/><circle cx="18" cy="-52" r="7.5" fill="#fff"/><path d="M-16 4 Q -32 0, -46 8" stroke="#e8e8e8" stroke-width="5" opacity=".55" fill="none"/></g>
+        <g transform="translate(330 186)"><rect x="-2" y="-62" width="4" height="64" fill="#7a5a3a"/><path d="M0 -62 l-22 8 M0 -62 l22 8 M0 -62 l-14 16 M0 -62 l14 16" stroke="#3f8a3a" stroke-width="6" stroke-linecap="round"/></g>
+        <g transform="translate(70 186)"><rect x="-2" y="-46" width="4" height="48" fill="#7a5a3a"/><path d="M0 -46 l-16 6 M0 -46 l16 6 M0 -46 l-10 12 M0 -46 l10 12" stroke="#3f8a3a" stroke-width="5" stroke-linecap="round"/></g>`;
+    }
+    if (kind === 'highway') {
+      let sky = '';
+      for (let i = 0; i < 16; i++) { const w = 18 + ((i * 37) % 22), h = 30 + ((i * 53) % 85), x = i * 26 - 6; sky += `<rect x="${x}" y="${152 - h}" width="${w}" height="${h + 10}" fill="${i % 3 ? '#232842' : '#2c3250'}"/>`; for (let y = 158 - h; y < 150; y += 9) for (let k = 4; k < w - 4; k += 7) if ((i * 7 + y * 3 + k) % 5 < 2) sky += `<rect x="${x + k}" y="${y}" width="3" height="4" fill="#ffd98a" opacity=".85"/>`; }
+      const car = (x, y, k, c) => `<g transform="translate(${x} ${y}) scale(${k})"><rect x="-30" y="-16" width="60" height="22" rx="7" fill="${c}"/><rect x="-21" y="-28" width="42" height="14" rx="4" fill="#1a2230"/><rect x="-26" y="-12" width="12" height="5" rx="2" fill="#ff4040"/><rect x="14" y="-12" width="12" height="5" rx="2" fill="#ff4040"/><rect x="-27" y="4" width="10" height="9" rx="2" fill="#15161a"/><rect x="17" y="4" width="10" height="9" rx="2" fill="#15161a"/></g>`;
+      mid = sky + `<path d="M-10 300 L170 150 L230 150 L410 300Z" fill="#3d4047"/><path d="M170 150 L-10 300 M230 150 L410 300" stroke="#f2f2f2" stroke-width="3"/>
+        <path d="M190 150 L100 300 M210 150 L300 300" stroke="#fff" stroke-width="3" stroke-dasharray="12 12"/>
+        ${car(203, 158, 0.32, '#f2f2f2')}${car(176, 170, 0.45, '#2a6fd0')}${car(150, 200, 1.05, '#ff2e63')}
+        <g transform="translate(250 190) scale(1.1)"><rect x="-3" y="-4" width="6" height="20" rx="3" fill="#15161a"/><path d="M-8 -6 L8 -6 L6 -19 L-6 -19Z" fill="#1fb6ff"/><circle cx="0" cy="-25" r="6.5" fill="#fff"/><rect x="-2.5" y="-6" width="5" height="3" fill="#ff4040"/></g>
+        <path d="M118 210 L96 236 M182 210 L204 236" stroke="#5ad8ff" stroke-width="4" opacity=".55" stroke-linecap="round"/>`;
+    }
     let trees = '';
-    if (kind === 'golf') trees = '';
+    if (kind === 'golf' || kind === 'wheelie' || kind === 'highway') trees = '';
     else if (kind !== 'skate') for (let i = 0; i < 10; i++) { const x = (i * 97 + 30) % 400, y = 200 + (i % 4) * 9; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="0" width="3" height="10" fill="#6a4a30"/><circle cx="0" cy="-3" r="8" fill="#4f9a3c"/></g>`; }
     else for (let i = 0; i < 5; i++) { const x = 20 + i * 48, y = 196; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="-30" width="3" height="34" fill="#7a5a3a"/><path d="M0 -30 l-16 6 M0 -30 l16 6 M0 -30 l-10 12 M0 -30 l10 12" stroke="#3f7a3a" stroke-width="5" stroke-linecap="round"/></g>`; }
     return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
 <defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
 <filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
 <rect width="400" height="300" fill="url(#${id}s)"/>
-<circle cx="${kind === 'skate' ? 110 : 320}" cy="${kind === 'skate' ? 170 : 60}" r="${kind === 'skate' ? 30 : 20}" fill="#fff6d6" opacity=".95" filter="url(#${id}b)"/>
-<path d="M-10 190 C 60 150, 120 170, 190 150 S 330 140, 410 170 L410 300 L-10 300Z" fill="${p.far}"/>
+${(() => { const [cx, cy, r] = { skate: [110, 170, 30], wheelie: [270, 140, 26], highway: [200, 96, 30] }[kind] || [320, 60, 20]; return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff6d6" opacity=".95" filter="url(#${id}b)"/>`; })()}
+${kind === 'wheelie' || kind === 'highway' ? '' : `<path d="M-10 190 C 60 150, 120 170, 190 150 S 330 140, 410 170 L410 300 L-10 300Z" fill="${p.far}"/>
 <path d="M-10 215 C 80 190, 160 205, 240 195 S 360 190, 410 205 L410 300 L-10 300Z" fill="${p.near}"/>
-<path d="M-10 240 C 100 225, 260 230, 410 236 L410 300 L-10 300Z" fill="${p.ground}"/>
-${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}</svg>`;
+<path d="M-10 240 C 100 225, 260 230, 410 236 L410 300 L-10 300Z" fill="${p.ground}"/>`}
+${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : kind === 'highway' ? `<rect y="110" width="400" height="190" fill="#3d4047"/><g transform="translate(0 -34)">${mid}</g>` : mid}</svg>`;
   }
 
   // ---------- hub ----------
@@ -127,6 +149,8 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
     skate: () => { const b = saved('skate'), v = Object.values(b); return v.length ? 'BEST ' + S.fmt(Math.max(...v)) : ''; },
     plane: () => { const b = saved('plane'); return b.flight ? 'BEST ' + S.fmt(b.flight) : b.rush ? 'BEST ' + b.rush + ' RINGS' : ''; },
     golf: () => { const b = saved('golf'); return b.full == null ? '' : 'BEST ' + (b.full === 0 ? 'EVEN' : b.full > 0 ? '+' + b.full : b.full); },
+    wheelie: () => { const b = saved('wheelie'); return b.endless ? 'BEST ' + S.fmt(b.endless) : b.chal ? 'BEST ' + S.fmt(b.chal) + ' m' : ''; },
+    highway: () => { const b = saved('highway'); return b.rush ? 'BEST ' + S.fmt(b.rush) : b.wrong ? 'BEST ' + S.fmt(b.wrong) : b.time ? 'BEST ' + S.fmt(b.time) + ' m' : ''; },
   };
   const winter = [
     { kind: 'park', title: 'Peak Rush', sub: '3D freestyle skiing', play: true },
@@ -140,12 +164,16 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
     { kind: 'plane', title: 'Paper Plane', sub: 'Glide as far as you can', href: 'play/plane.html', game: 'plane', summer: true },
     { kind: 'golf', title: 'Mini Golf', sub: 'Nine crazy holes by the sea', href: 'play/golf.html', game: 'golf', summer: true },
   ];
+  const motor = [
+    { kind: 'highway', title: 'Highway Rush', sub: 'Cars and bikes through traffic', href: 'play/highway.html', game: 'highway', summer: true },
+    { kind: 'wheelie', title: 'Wheelie Run', sub: 'Keep the front wheel up', href: 'play/wheelie.html', game: 'wheelie', summer: true },
+  ];
   const card = (c) => {
     const b = c.game ? BEST[c.game]() : '';
     const inner = `<div class="art">${c.summer ? summerArt(c.kind) : art(c.kind)}</div>${c.href ? '<span class="new">NEW</span>' : ''}<div class="meta"><b>${c.title}</b><span>${c.sub}</span>${b ? `<em>${b}</em>` : ''}</div>`;
     return c.href ? `<a class="gcard playable" href="${c.href}">${inner}</a>` : `<div class="gcard playable" data-play="1">${inner}</div>`;
   };
-  function renderCards() { $('gameGrid').innerHTML = winter.map(card).join(''); $('summerGrid').innerHTML = summer.map(card).join(''); }
+  function renderCards() { $('gameGrid').innerHTML = winter.map(card).join(''); $('summerGrid').innerHTML = summer.map(card).join(''); $('motorGrid').innerHTML = motor.map(card).join(''); }
   renderCards();
   addEventListener('pageshow', renderCards);
   $('gameGrid').addEventListener('click', (e) => { if (e.target.closest('[data-play]')) openGame(); });

@@ -7,8 +7,9 @@ body.k-aim #gl { cursor: none; }
 /* menu: glass panel over the live 3D scene */
 .k-ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; overflow-y: auto; }
 .k-dim { background: rgba(3, 8, 18, .55); }
-.k-menu { align-items: flex-start; justify-content: center; padding: clamp(16px, 4vw, 56px); background: linear-gradient(90deg, rgba(5, 13, 29, .82) 0%, rgba(5, 13, 29, .45) 42%, rgba(5, 13, 29, 0) 70%); }
-.k-menu-panel { width: min(470px, 100%); display: flex; flex-direction: column; gap: 14px; }
+.k-menu { align-items: flex-start; justify-content: flex-start; padding: clamp(16px, 4vw, 56px); background: linear-gradient(90deg, rgba(5, 13, 29, .82) 0%, rgba(5, 13, 29, .45) 42%, rgba(5, 13, 29, 0) 70%); }
+.k-menu-panel { width: min(470px, 100%); display: flex; flex-direction: column; gap: 14px; margin-block: auto; }
+@media (max-height: 820px) { .k-menu-panel { gap: 10px; } .k-title { font-size: clamp(40px, 6vw, 66px); } .k-blurb { font-size: 14px; } .k-mode { padding: 10px 16px 10px 12px; } .k-mode-play { width: 38px; height: 38px; } .k-mode b { font-size: 18px; } }
 .k-menu-top { display: flex; align-items: center; gap: 14px; }
 .k-menu-top .back-btn { text-decoration: none; }
 .k-tag { font-size: 12px; font-weight: 700; letter-spacing: .2em; color: var(--ice); }
@@ -155,3 +156,27 @@ a.menu-btn { text-decoration: none; display: block; }
 .mg-table th { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
 .mg-table td.good { color: #2bd97c; font-weight: 900; }
 .mg-table td.bad { color: #ff7a85; font-weight: 700; }
+/* wheelie */
+.wh-gauge { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); width: 220px; text-align: center; font-style: normal; }
+.wh-gauge svg { width: 220px; height: 132px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .4)); }
+.wh-cur { margin-top: -26px; }
+.wh-cur b { display: block; font-size: 30px; font-weight: 900; font-style: italic; }
+.wh-cur span { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--gold); }
+
+/* ---------- Highway Rush ---------- */
+.hw-gear { display: inline-flex; flex-direction: column; align-items: center; margin-left: 14px; vertical-align: 8px; padding: 4px 10px; border-radius: 10px; background: rgba(5, 13, 29, .55); }
+.hw-gear b { font-size: 24px; font-weight: 900; font-style: italic; line-height: 1; }
+.hw-gear span { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: var(--muted); }
+.hw-bottom { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hw-combo { opacity: 0; transform: translateY(8px) scale(.9); transition: opacity .2s, transform .2s; text-align: center; }
+.hw-combo.on { opacity: 1; transform: none; }
+.hw-combo b { display: block; font-size: 26px; font-weight: 900; font-style: italic; color: var(--gold); text-shadow: 0 2px 14px rgba(0, 0, 0, .5); }
+.hw-combo i { display: block; width: 160px; height: 5px; margin: 4px auto 0; border-radius: 3px; background: rgba(255, 255, 255, .2); overflow: hidden; }
+.hw-combo u { display: block; height: 100%; background: var(--gold); transform-origin: left; text-decoration: none; }
+.hw-nitro { position: relative; width: 260px; height: 16px; border-radius: 8px; background: rgba(5, 13, 29, .6); box-shadow: 0 2px 12px rgba(0, 0, 0, .35); overflow: hidden; }
+.hw-nitro > i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 8px; background: linear-gradient(90deg, #1f6bff, #5ad8ff); transition: width .1s linear; }
+.hw-nitro > span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: .3em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.hw-nitro.full > i { box-shadow: 0 0 18px #5ad8ff; }
+.hw-nitro.on > i { background: linear-gradient(90deg, #9a6bff, #5ad8ff, #fff); animation: hwPulse .25s infinite alternate; }
+@keyframes hwPulse { to { filter: brightness(1.4); } }
+@media (max-width: 700px) { .hw-nitro { width: 180px; } .hw-combo b { font-size: 20px; } }
