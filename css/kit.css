@@ -130,3 +130,5 @@ a.menu-btn { text-decoration: none; display: block; }
 .sk-combo .combo-bar > div { height: 100%; width: 100%; background: var(--gold); transform-origin: left; }
 .sk-bal { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); text-align: center; }
 .sk-needle { position: absolute; top: -6px; left: 50%; width: 6px; height: 26px; margin-left: -3px; border-radius: 3px; background: #fff; box-shadow: 0 0 10px #fff; }
+.pp-lift { margin-top: 8px; display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(255, 210, 63, .9); color: #2b1a00; font-style: normal; font-weight: 900; font-size: 13px; letter-spacing: .12em; opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s; }
+.pp-lift.on { opacity: 1; transform: none; }
