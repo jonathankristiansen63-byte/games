@@ -54,6 +54,51 @@
 ${trees}${mid}${extra}${skier}</svg>`;
   }
 
+  // summer cards: green hills instead of snow
+  const SUMMER = {
+    kart: { sky: ['#3b8fe0', '#d4ecff'], far: '#7fb07a', near: '#5d9a52', ground: '#6aa84a' },
+    skate: { sky: ['#2c3a78', '#ffa36c'], far: '#b5532e', near: '#c96a3a', ground: '#c8a890' },
+    plane: { sky: ['#3f6fc4', '#ffd7b0'], far: '#9ab0a0', near: '#86b060', ground: '#8ab868' },
+  };
+  function summerArt(kind) {
+    const p = SUMMER[kind], id = 'g' + (uid++);
+    let mid = '';
+    if (kind === 'kart') {
+      mid = `<path d="M-10 300 C 80 240, 120 215, 200 212 S 330 222, 410 196 L410 232 C 330 252, 260 246, 200 248 S 120 268, 70 300Z" fill="#3a3d44"/>
+        <path d="M-10 300 C 80 240, 120 215, 200 212 S 330 222, 410 196" fill="none" stroke="#e8202a" stroke-width="5" stroke-dasharray="10 10"/>
+        <path d="M70 300 C 120 268, 160 248, 200 248 S 330 252, 410 232" fill="none" stroke="#f4f4f4" stroke-width="5" stroke-dasharray="10 10"/>
+        <g transform="translate(205 236)"><rect x="-26" y="-12" width="52" height="16" rx="5" fill="#ff2e63"/><rect x="-10" y="-22" width="18" height="12" rx="3" fill="#1b1d22"/><circle cx="-1" cy="-27" r="8" fill="#f4f6f9"/><rect x="-1" y="-30" width="9" height="4" rx="2" fill="#1fb6ff"/>
+        <circle cx="-20" cy="6" r="8" fill="#15161a"/><circle cx="20" cy="6" r="8" fill="#15161a"/><circle cx="-20" cy="6" r="3" fill="#ccc"/><circle cx="20" cy="6" r="3" fill="#ccc"/></g>
+        <g transform="translate(300 214) scale(.6)"><rect x="-26" y="-12" width="52" height="16" rx="5" fill="#ffd23f"/><circle cx="-1" cy="-24" r="8" fill="#ff2e63"/><circle cx="-20" cy="6" r="8" fill="#15161a"/><circle cx="20" cy="6" r="8" fill="#15161a"/></g>`;
+    }
+    if (kind === 'skate') {
+      mid = `<path d="M230 300 L230 150 Q 230 250, 330 250 L410 250 L410 300Z" fill="#e8cdb6"/><rect x="226" y="146" width="8" height="8" fill="#d5dbe3"/>
+        <line x1="60" y1="238" x2="170" y2="238" stroke="#ffd23f" stroke-width="4"/><rect x="72" y="238" width="3" height="20" fill="#2a2f3a"/><rect x="156" y="238" width="3" height="20" fill="#2a2f3a"/>
+        <g transform="translate(120 196) rotate(-12)"><rect x="-24" y="26" width="48" height="5" rx="2.5" fill="#ff2e63"/><circle cx="-16" cy="34" r="3" fill="#fff"/><circle cx="16" cy="34" r="3" fill="#fff"/>
+        <path d="M-8 25 L-4 6 L6 6 L10 25" stroke="#2a3550" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M-7 8 L-3 -16 L9 -14 L7 8Z" fill="#2bd97c"/><circle cx="2" cy="-23" r="7" fill="#e8b796"/><path d="M-5 -27 Q 2 -34 9 -27Z" fill="#1b1f2a"/>
+        <path d="M-3 -10 L-20 -18" stroke="#2bd97c" stroke-width="5" stroke-linecap="round"/><path d="M7 -10 L22 -22" stroke="#2bd97c" stroke-width="5" stroke-linecap="round"/></g>`;
+    }
+    if (kind === 'plane') {
+      let roofs = '';
+      for (let i = 0; i < 9; i++) { const x = 10 + i * 45 + (i % 2) * 10, y = 250 + (i % 3) * 10; roofs += `<rect x="${x}" y="${y}" width="30" height="20" fill="${['#f2e6d0', '#e8c8a0', '#b8d0e0'][i % 3]}"/><path d="M${x - 3} ${y} L${x + 15} ${y - 12} L${x + 33} ${y}Z" fill="${['#b8473a', '#4a5a6a', '#8a3a32'][i % 3]}"/>`; }
+      mid = roofs + `<path d="M40 150 C 120 120, 170 170, 230 120" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 8" opacity=".85"/>
+        <g transform="translate(262 104) rotate(-14)"><path d="M-40 6 L40 -16 L-6 22Z" fill="#fffaf0"/><path d="M-6 22 L40 -16 L-2 8Z" fill="#c8d4e6"/><path d="M-30 6 L20 -8" stroke="#ff4a3c" stroke-width="3"/></g>
+        <ellipse cx="90" cy="70" rx="40" ry="12" fill="#fff" opacity=".8"/><ellipse cx="330" cy="50" rx="34" ry="10" fill="#fff" opacity=".7"/>`;
+    }
+    let trees = '';
+    if (kind !== 'skate') for (let i = 0; i < 10; i++) { const x = (i * 97 + 30) % 400, y = 200 + (i % 4) * 9; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="0" width="3" height="10" fill="#6a4a30"/><circle cx="0" cy="-3" r="8" fill="#4f9a3c"/></g>`; }
+    else for (let i = 0; i < 5; i++) { const x = 20 + i * 48, y = 196; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="-30" width="3" height="34" fill="#7a5a3a"/><path d="M0 -30 l-16 6 M0 -30 l16 6 M0 -30 l-10 12 M0 -30 l10 12" stroke="#3f7a3a" stroke-width="5" stroke-linecap="round"/></g>`; }
+    return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
+<filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+<rect width="400" height="300" fill="url(#${id}s)"/>
+<circle cx="${kind === 'skate' ? 110 : 320}" cy="${kind === 'skate' ? 170 : 60}" r="${kind === 'skate' ? 30 : 20}" fill="#fff6d6" opacity=".95" filter="url(#${id}b)"/>
+<path d="M-10 190 C 60 150, 120 170, 190 150 S 330 140, 410 170 L410 300 L-10 300Z" fill="${p.far}"/>
+<path d="M-10 215 C 80 190, 160 205, 240 195 S 360 190, 410 205 L410 300 L-10 300Z" fill="${p.near}"/>
+<path d="M-10 240 C 100 225, 260 230, 410 236 L410 300 L-10 300Z" fill="${p.ground}"/>
+${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}</svg>`;
+  }
+
   // ---------- hub ----------
   const hub = $('hub'), game = $('game');
   $('heroArt').innerHTML = art('park');
@@ -63,14 +108,36 @@ ${trees}${mid}${extra}${skier}</svg>`;
     $('heroStats').innerHTML = items.map(([k, v]) => `<div><b>${v}</b>${k}</div>`).join('');
   }
   heroStats();
-  const cards = [
+  // best scores saved by the games in play/ (friminutt.<game>.best = {mode: value})
+  const saved = (g) => { try { return JSON.parse(localStorage.getItem('friminutt.' + g + '.best')) || {}; } catch (e) { return {}; } };
+  const fmtT = (t) => S.fmtTime(t);
+  const BEST = {
+    sled: () => { const b = saved('sled'); return b.endless ? 'BEST ' + S.fmt(b.endless) : ''; },
+    hockey: () => { const b = saved('hockey'); return b.shooter ? 'BEST ' + S.fmt(b.shooter) : b.goalie ? 'GOALIE BEST ' + S.fmt(b.goalie) : ''; },
+    snowball: () => { const b = saved('snowball'); return b.waves ? 'BEST ' + S.fmt(b.waves) : b.quick ? 'BEST ' + S.fmt(b.quick) : ''; },
+    kart: () => { const b = saved('kart'), t = Object.values(b).filter((v) => v > 0); return t.length ? 'RECORD ' + fmtT(Math.min(...t)) : ''; },
+    skate: () => { const b = saved('skate'), v = Object.values(b); return v.length ? 'BEST ' + S.fmt(Math.max(...v)) : ''; },
+    plane: () => { const b = saved('plane'); return b.flight ? 'BEST ' + S.fmt(b.flight) : b.rush ? 'BEST ' + b.rush + ' RINGS' : ''; },
+  };
+  const winter = [
     { kind: 'park', title: 'Peak Rush', sub: '3D freestyle skiing', play: true },
-    { kind: 'hockey', title: 'Ice Shootout', sub: 'Coming soon' },
-    { kind: 'sled', title: 'Sled Rush', sub: 'Coming soon' },
-    { kind: 'snowball', title: 'Snowball Fight', sub: 'Coming soon' },
+    { kind: 'sled', title: 'Sled Rush', sub: 'Endless downhill sledding', href: 'play/sled.html', game: 'sled' },
+    { kind: 'hockey', title: 'Ice Shootout', sub: 'Pond hockey: shooter or goalie', href: 'play/hockey.html', game: 'hockey' },
+    { kind: 'snowball', title: 'Snowball Fight', sub: 'Hold the snow fort', href: 'play/snowball.html', game: 'snowball' },
   ];
-  $('gameGrid').innerHTML = cards.map((c) => `<div class="gcard ${c.play ? 'playable' : 'locked'}" ${c.play ? 'data-play="1"' : ''}>
-    <div class="art">${art(c.kind)}</div>${c.play ? '' : '<span class="soon">SOON</span>'}<div class="meta"><b>${c.title}</b><span>${c.sub}</span></div></div>`).join('');
+  const summer = [
+    { kind: 'kart', title: 'Kart Racing', sub: 'Three tracks, drifts and items', href: 'play/kart.html', game: 'kart', summer: true },
+    { kind: 'skate', title: 'Skate Park', sub: 'Flips, grinds and combos', href: 'play/skate.html', game: 'skate', summer: true },
+    { kind: 'plane', title: 'Paper Plane', sub: 'Glide as far as you can', href: 'play/plane.html', game: 'plane', summer: true },
+  ];
+  const card = (c) => {
+    const b = c.game ? BEST[c.game]() : '';
+    const inner = `<div class="art">${c.summer ? summerArt(c.kind) : art(c.kind)}</div>${c.href ? '<span class="new">NEW</span>' : ''}<div class="meta"><b>${c.title}</b><span>${c.sub}</span>${b ? `<em>${b}</em>` : ''}</div>`;
+    return c.href ? `<a class="gcard playable" href="${c.href}">${inner}</a>` : `<div class="gcard playable" data-play="1">${inner}</div>`;
+  };
+  function renderCards() { $('gameGrid').innerHTML = winter.map(card).join(''); $('summerGrid').innerHTML = summer.map(card).join(''); }
+  renderCards();
+  addEventListener('pageshow', renderCards);
   $('gameGrid').addEventListener('click', (e) => { if (e.target.closest('[data-play]')) openGame(); });
   $('playSki').addEventListener('click', openGame);
   $('hubPanic').addEventListener('click', () => window.DocsDisguise && DocsDisguise.show());
