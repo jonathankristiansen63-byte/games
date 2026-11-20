@@ -82,3 +82,19 @@ a.menu-btn { text-decoration: none; display: block; }
 .ice-clock { width: 180px; margin-top: 6px; }
 .ice-charge { position: absolute; left: 0; top: 0; width: 0; height: 0; --c: 0; }
 .ice-charge::before { content: ''; position: absolute; left: -27px; top: -27px; width: 54px; height: 54px; border-radius: 50%; background: conic-gradient(var(--hot) calc(var(--c) * 1turn), rgba(255, 255, 255, .18) 0); -webkit-mask: radial-gradient(circle, transparent 21px, #000 22px); mask: radial-gradient(circle, transparent 21px, #000 22px); }
+.sb-ammo { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; align-items: center; min-height: 26px; }
+.sb-ammo i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #dfe8f5 60%, #b9c8dc); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); transition: opacity .2s, transform .2s; }
+.sb-ammo i.off { opacity: .2; transform: scale(.7); }
+.sb-ammo i.big { width: 26px; height: 26px; box-shadow: 0 0 0 2px var(--gold), 0 2px 6px rgba(0, 0, 0, .35); }
+.sb-ammo i.inf { width: auto; height: auto; background: none; box-shadow: none; font-style: normal; font-weight: 900; font-size: 30px; color: var(--gold); }
+.sb-splat { position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle at 30% 40%, rgba(255,255,255,.97) 0 9%, rgba(255,255,255,.7) 13%, transparent 19%),
+    radial-gradient(circle at 62% 55%, rgba(255,255,255,.97) 0 13%, rgba(255,255,255,.65) 18%, transparent 25%),
+    radial-gradient(circle at 48% 30%, rgba(255,255,255,.9) 0 5%, transparent 9%),
+    radial-gradient(circle at 75% 32%, rgba(255,255,255,.9) 0 4%, transparent 8%),
+    radial-gradient(circle at 40% 68%, rgba(255,255,255,.9) 0 6%, transparent 10%),
+    radial-gradient(ellipse at center, rgba(220,235,255,.0) 40%, rgba(220,235,255,.65)); }
+.sb-splat.on { animation: sbSplat 1.6s ease-out forwards; }
+@keyframes sbSplat { 0% { opacity: 0; transform: scale(1.15); } 6% { opacity: 1; transform: scale(1); } 45% { opacity: .9; } 100% { opacity: 0; transform: translateY(30px); } }
+.sb-duck { position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%); font-style: normal; font-weight: 700; letter-spacing: .2em; font-size: 13px; padding: 8px 16px; border-radius: 999px; background: rgba(5, 13, 29, .5); opacity: 0; transition: opacity .2s; }
+.sb-duck.on { opacity: 1; }
