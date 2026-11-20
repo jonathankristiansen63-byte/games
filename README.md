@@ -1,6 +1,6 @@
 # Friminutt
 
-Browser games for the boring bits. Seven 3D games, all with the Å panic button.
+Browser games for the boring bits. Eight 3D games, all with the Å panic button.
 
 **Play:** open `index.html` through any web server (or GitHub Pages). No build step.
 
@@ -13,6 +13,7 @@ Browser games for the boring bits. Seven 3D games, all with the Å panic button.
 | **Kart Racing** | Summer | Three tracks, five AI racers, drift boosts and items |
 | **Skate Park** | Summer | Flips, grabs, grinds, manuals and vert in a plaza and a bowl |
 | **Paper Plane** | Summer | Glide over an endless countryside, ride updrafts, thread rings |
+| **Mini Golf** | Summer | Nine crazy holes by the sea: windmill, ramp jump, loop, volcano, castle |
 
 Every game: `Esc` pause · `M` sound on / off (off by default) · `R` restart · `Å` panic button.
 
@@ -53,6 +54,10 @@ City Plaza and Sunset Bowl, as a 2 minute Session (find S-K-A-T-E) or Free Skate
 ## Paper Plane
 
 Long Flight (distance) or Ring Rush (rings add time). W dives for speed, S climbs, A / D bank to turn. Sparkling columns and chimney smoke are updrafts.
+
+## Mini Golf
+
+Full Course (9 holes, par 26) or Quick Round (3 random holes). Drag back from anywhere like a slingshot and let go to putt, or aim with A / D and hold Space for power. Hold C for an overview of the hole. Water costs a stroke, and you pick up after 8.
 
 ## Code
 

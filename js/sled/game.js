@@ -36,10 +36,12 @@
     return add;
   }
   const H = (x, z) => baseH(x, z) + rampAdd(x, z);
+  // one-sided slopes: the smoother side wins, so a ramp lip does not tilt the snow right before it
+  const oneSide = (h0, f, b) => (Math.abs(f - h0) < Math.abs(h0 - b) ? f - h0 : h0 - b);
   function normal(x, z, out) {
-    const e = 0.35;
-    const hx = H(x + e, z) - H(x - e, z), hz = H(x, z + e) - H(x, z - e);
-    return out.set(-hx / (2 * e), 1, -hz / (2 * e)).normalize();
+    const e = 0.35, h0 = H(x, z);
+    const hx = oneSide(h0, H(x + e, z), H(x - e, z)), hz = oneSide(h0, H(x, z + e), H(x, z - e));
+    return out.set(-hx / e, 1, -hz / e).normalize();
   }
 
   // ---------- shared meshes ----------

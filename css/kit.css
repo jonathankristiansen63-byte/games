@@ -132,3 +132,26 @@ a.menu-btn { text-decoration: none; display: block; }
 .sk-needle { position: absolute; top: -6px; left: 50%; width: 6px; height: 26px; margin-left: -3px; border-radius: 3px; background: #fff; box-shadow: 0 0 10px #fff; }
 .pp-lift { margin-top: 8px; display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(255, 210, 63, .9); color: #2b1a00; font-style: normal; font-weight: 900; font-size: 13px; letter-spacing: .12em; opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s; }
 .pp-lift.on { opacity: 1; transform: none; }
+/* mini golf */
+.mg-power { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); text-align: center; }
+.mg-bar { width: 260px; height: 14px; border-radius: 7px; background: rgba(5, 13, 29, .55); overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, .35); margin-bottom: 6px; }
+.mg-bar i { display: block; height: 100%; width: 0; border-radius: 7px; background: linear-gradient(90deg, #2bd97c, #ffd23f 60%, #ff4d4d); }
+.mg-card { position: absolute; left: 50%; top: 26%; transform: translate(-50%, 0); display: flex; align-items: center; gap: 18px; padding: 18px 30px 18px 18px; border-radius: 26px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(12px); box-shadow: 0 20px 60px rgba(0, 0, 0, .4); font-style: italic; opacity: 0; }
+.mg-card.in { animation: mgIn .6s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.mg-card.out { animation: mgOut .4s ease-in forwards; }
+@keyframes mgIn { from { opacity: 0; transform: translate(-50%, 30px) scale(.8); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes mgOut { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -30px) scale(.95); } }
+.mg-num { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 42px; font-weight: 900; color: #1b0a00; background: linear-gradient(180deg, #ffd23f, var(--hot)); box-shadow: 0 6px 18px rgba(255, 106, 43, .45); }
+.mg-card b { display: block; font-size: 34px; font-weight: 900; line-height: 1.05; }
+.mg-card span { font-style: normal; font-weight: 700; letter-spacing: .2em; font-size: 13px; color: var(--gold); }
+.mg-mini { position: absolute; left: 26px; bottom: 24px; display: flex; gap: 6px; font-style: normal; }
+.mg-mini i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 900; background: rgba(5, 13, 29, .5); color: rgba(255, 255, 255, .55); border: 2px solid rgba(255, 255, 255, .18); }
+.mg-mini i.cur { border-color: #fff; color: #fff; }
+.mg-mini i.good { background: #2bd97c; color: #04220f; border-color: #2bd97c; }
+.mg-mini i.par { background: #fff; color: #1b1f2a; border-color: #fff; }
+.mg-mini i.bad { background: #ff4d5e; color: #fff; border-color: #ff4d5e; }
+.mg-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.mg-table th, .mg-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: center; }
+.mg-table th { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
+.mg-table td.good { color: #2bd97c; font-weight: 900; }
+.mg-table td.bad { color: #ff7a85; font-weight: 700; }

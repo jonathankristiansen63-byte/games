@@ -59,6 +59,7 @@ ${trees}${mid}${extra}${skier}</svg>`;
     kart: { sky: ['#3b8fe0', '#d4ecff'], far: '#7fb07a', near: '#5d9a52', ground: '#6aa84a' },
     skate: { sky: ['#2c3a78', '#ffa36c'], far: '#b5532e', near: '#c96a3a', ground: '#c8a890' },
     plane: { sky: ['#3f6fc4', '#ffd7b0'], far: '#9ab0a0', near: '#86b060', ground: '#8ab868' },
+    golf: { sky: ['#2a74d0', '#cfe8ff'], far: '#7fc8f0', near: '#ead6a4', ground: '#5fae45' },
   };
   function summerArt(kind) {
     const p = SUMMER[kind], id = 'g' + (uid++);
@@ -85,8 +86,15 @@ ${trees}${mid}${extra}${skier}</svg>`;
         <g transform="translate(262 104) rotate(-14)"><path d="M-40 6 L40 -16 L-6 22Z" fill="#fffaf0"/><path d="M-6 22 L40 -16 L-2 8Z" fill="#c8d4e6"/><path d="M-30 6 L20 -8" stroke="#ff4a3c" stroke-width="3"/></g>
         <ellipse cx="90" cy="70" rx="40" ry="12" fill="#fff" opacity=".8"/><ellipse cx="330" cy="50" rx="34" ry="10" fill="#fff" opacity=".7"/>`;
     }
+    if (kind === 'golf') {
+      mid = `<path d="M70 300 L150 196 L260 196 L340 300Z" fill="#1f9a3c"/><path d="M70 300 L150 196 M260 196 L340 300" stroke="#ff4d5e" stroke-width="7" stroke-linecap="round"/><path d="M150 196 L260 196" stroke="#ff4d5e" stroke-width="5"/>
+        <ellipse cx="205" cy="212" rx="12" ry="4" fill="#0b0d10"/><line x1="207" y1="212" x2="207" y2="150" stroke="#fff" stroke-width="2.5"/><path d="M207 150 L236 158 L207 166Z" fill="#ffd23f"/>
+        <g transform="translate(290 168)"><rect x="-16" y="-10" width="32" height="38" fill="#f4efe6"/><path d="M-22 -10 L0 -34 L22 -10Z" fill="#c8322a"/><g transform="rotate(20 0 -18)"><rect x="-2" y="-58" width="4" height="80" fill="#fff8ea"/><rect x="-40" y="-20" width="80" height="4" fill="#fff8ea"/></g><rect x="-6" y="14" width="12" height="14" fill="#8a5a35"/></g>
+        <circle cx="180" cy="262" r="7" fill="#fff"/><circle cx="178" cy="260" r="2" fill="#e6eef8"/>`;
+    }
     let trees = '';
-    if (kind !== 'skate') for (let i = 0; i < 10; i++) { const x = (i * 97 + 30) % 400, y = 200 + (i % 4) * 9; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="0" width="3" height="10" fill="#6a4a30"/><circle cx="0" cy="-3" r="8" fill="#4f9a3c"/></g>`; }
+    if (kind === 'golf') trees = '';
+    else if (kind !== 'skate') for (let i = 0; i < 10; i++) { const x = (i * 97 + 30) % 400, y = 200 + (i % 4) * 9; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="0" width="3" height="10" fill="#6a4a30"/><circle cx="0" cy="-3" r="8" fill="#4f9a3c"/></g>`; }
     else for (let i = 0; i < 5; i++) { const x = 20 + i * 48, y = 196; trees += `<g transform="translate(${x} ${y})"><rect x="-1.5" y="-30" width="3" height="34" fill="#7a5a3a"/><path d="M0 -30 l-16 6 M0 -30 l16 6 M0 -30 l-10 12 M0 -30 l10 12" stroke="#3f7a3a" stroke-width="5" stroke-linecap="round"/></g>`; }
     return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
 <defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
@@ -118,6 +126,7 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
     kart: () => { const b = saved('kart'), t = Object.values(b).filter((v) => v > 0); return t.length ? 'RECORD ' + fmtT(Math.min(...t)) : ''; },
     skate: () => { const b = saved('skate'), v = Object.values(b); return v.length ? 'BEST ' + S.fmt(Math.max(...v)) : ''; },
     plane: () => { const b = saved('plane'); return b.flight ? 'BEST ' + S.fmt(b.flight) : b.rush ? 'BEST ' + b.rush + ' RINGS' : ''; },
+    golf: () => { const b = saved('golf'); return b.full == null ? '' : 'BEST ' + (b.full === 0 ? 'EVEN' : b.full > 0 ? '+' + b.full : b.full); },
   };
   const winter = [
     { kind: 'park', title: 'Peak Rush', sub: '3D freestyle skiing', play: true },
@@ -129,6 +138,7 @@ ${trees}${kind === 'kart' ? `<g transform="translate(0 -38)">${mid}</g>` : mid}<
     { kind: 'kart', title: 'Kart Racing', sub: 'Three tracks, drifts and items', href: 'play/kart.html', game: 'kart', summer: true },
     { kind: 'skate', title: 'Skate Park', sub: 'Flips, grinds and combos', href: 'play/skate.html', game: 'skate', summer: true },
     { kind: 'plane', title: 'Paper Plane', sub: 'Glide as far as you can', href: 'play/plane.html', game: 'plane', summer: true },
+    { kind: 'golf', title: 'Mini Golf', sub: 'Nine crazy holes by the sea', href: 'play/golf.html', game: 'golf', summer: true },
   ];
   const card = (c) => {
     const b = c.game ? BEST[c.game]() : '';

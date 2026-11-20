@@ -89,10 +89,12 @@
     for (const f of park.feats) h = Math.max(h, f.type === 'qp' ? qpH(f, x, z) : boxH(f, x, z));
     return h;
   }
+  // one-sided slopes: the smoother side wins, so ledge and box edges do not tilt the ground next to them
+  const oneSide = (h0, f, b) => (Math.abs(f - h0) < Math.abs(h0 - b) ? f - h0 : h0 - b);
   function normal(x, z, out) {
-    const e = 0.08;
-    const hx = H(x + e, z) - H(x - e, z), hz = H(x, z + e) - H(x, z - e);
-    return out.set(-hx / (2 * e), 1, -hz / (2 * e)).normalize();
+    const e = 0.08, h0 = H(x, z);
+    const hx = oneSide(h0, H(x + e, z), H(x - e, z)), hz = oneSide(h0, H(x, z + e), H(x, z - e));
+    return out.set(-hx / e, 1, -hz / e).normalize();
   }
   function onStairs(x, z) {
     for (const f of park.feats) if (f.stairs && x >= f.x0 && x <= f.x1 && z < f.z0 && z > f.z0 - f.stairs.len) return true;
