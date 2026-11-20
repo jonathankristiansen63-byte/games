@@ -121,3 +121,12 @@ a.menu-btn { text-decoration: none; display: block; }
 .kr-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .kr-table i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; vertical-align: -1px; }
 .kr-table tr.me td { color: var(--gold); font-weight: 700; }
+.sk-letters { display: flex; gap: 6px; margin-top: 10px; }
+.sk-letters i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 16px; background: rgba(5, 13, 29, .5); color: rgba(255, 255, 255, .35); border: 2px solid rgba(255, 255, 255, .2); }
+.sk-letters i.on { background: var(--gold); color: #1b0a00; border-color: var(--hot); }
+.sk-combo { margin-top: 6px; opacity: 0; transform: translateX(10px); transition: opacity .2s, transform .2s; }
+.sk-combo.on { opacity: 1; transform: none; }
+.sk-combo #kMult { color: var(--hot); font-size: 30px; }
+.sk-combo .combo-bar > div { height: 100%; width: 100%; background: var(--gold); transform-origin: left; }
+.sk-bal { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); text-align: center; }
+.sk-needle { position: absolute; top: -6px; left: 50%; width: 6px; height: 26px; margin-left: -3px; border-radius: 3px; background: #fff; box-shadow: 0 0 10px #fff; }
